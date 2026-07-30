@@ -26,6 +26,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -36,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.SolidColor
@@ -49,8 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.documentfile.provider.DocumentFile
-import androidx.media3.common.AudioAttributes
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -305,9 +306,12 @@ class MainActivity : ComponentActivity() {
     private var themeModeOption by mutableStateOf(ThemeModeOption.DARK)
     private var selectedVisualizer by mutableStateOf(VisualizerStyle.BARS)
 
+    private var isSearchOpen by mutableStateOf(false)
+    private var searchQuery by mutableStateOf("")
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
+    ) { _ ->
         val savedUriStr = getSharedPreferences("prefs", MODE_PRIVATE).getString("folder_uri", null)
         val uri = savedUriStr?.let { Uri.parse(it) }
         if (!loadCachedLibrary()) {
@@ -366,7 +370,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            BackHandler(enabled = isFiltered) { resetFilter() }
+            BackHandler(enabled = isFiltered || isSearchOpen) {
+                if (isSearchOpen) {
+                    isSearchOpen = false
+                    searchQuery = ""
+                } else {
+                    resetFilter()
+                }
+            }
 
             val isDarkTheme = when (themeModeOption) {
                 ThemeModeOption.DARK -> true
@@ -388,13 +399,46 @@ class MainActivity : ComponentActivity() {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text("MediaNexpo", fontSize = 24.sp, color = currentTheme.accent)
-                            IconButton(onClick = { showSettingsDialog = true }) {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = "Settings",
-                                    tint = currentTheme.accent
-                                )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                IconButton(onClick = { isSearchOpen = !isSearchOpen }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "Search",
+                                        tint = currentTheme.accent
+                                    )
+                                }
+                                IconButton(onClick = { showSettingsDialog = true }) {
+                                    Icon(
+                                        imageVector = Icons.Default.Settings,
+                                        contentDescription = "Settings",
+                                        tint = currentTheme.accent
+                                    )
+                                }
                             }
+                        }
+
+                        if (isSearchOpen) {
+                            Spacer(modifier = Modifier.height(6.dp))
+                            OutlinedTextField(
+                                value = searchQuery,
+                                onValueChange = { searchQuery = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Search songs, artists, videos...", color = subTextColor) },
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = currentTheme.accent,
+                                    unfocusedBorderColor = subTextColor.copy(alpha = 0.5f),
+                                    focusedLabelColor = currentTheme.accent,
+                                    cursorColor = currentTheme.accent
+                                ),
+                                trailingIcon = {
+                                    if (searchQuery.isNotEmpty()) {
+                                        IconButton(onClick = { searchQuery = "" }) {
+                                            Icon(Icons.Default.Clear, contentDescription = "Clear", tint = subTextColor)
+                                        }
+                                    }
+                                }
+                            )
                         }
 
                         if (isScanning) {
@@ -455,10 +499,38 @@ class MainActivity : ComponentActivity() {
 
                         Spacer(modifier = Modifier.height(8.dp))
 
+                        val filteredTracks = if (searchQuery.isBlank()) {
+                            displayTracks
+                        } else {
+                            displayTracks.filter { 
+                                it.title.contains(searchQuery, ignoreCase = true) || 
+                                it.artist.contains(searchQuery, ignoreCase = true) ||
+                                it.genre.contains(searchQuery, ignoreCase = true)
+                            }
+                        }
+
+                        val filteredArtists = if (searchQuery.isBlank()) {
+                            artistsList
+                        } else {
+                            artistsList.filter { it.contains(searchQuery, ignoreCase = true) }
+                        }
+
+                        val filteredGenres = if (searchQuery.isBlank()) {
+                            genresList
+                        } else {
+                            genresList.filter { it.contains(searchQuery, ignoreCase = true) }
+                        }
+
+                        val filteredVideos = if (searchQuery.isBlank()) {
+                            videosList
+                        } else {
+                            videosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
+                        }
+
                         Box(modifier = Modifier.weight(1f)) {
                             when (selectedTab) {
                                 0 -> TrackList(
-                                    tracks = displayTracks,
+                                    tracks = if (searchQuery.isBlank()) filteredTracks else filteredTracks.filter { it.title.contains(searchQuery, ignoreCase = true) || it.artist.contains(searchQuery, ignoreCase = true) },
                                     cardBg = activeCardBg,
                                     textColor = textColor,
                                     subTextColor = subTextColor,
@@ -466,7 +538,7 @@ class MainActivity : ComponentActivity() {
                                     onTrackLongClick = { trackToAddToPlaylist = it }
                                 )
                                 1 -> ArtistList(
-                                    artists = artistsList,
+                                    artists = filteredArtists,
                                     theme = currentTheme,
                                     cardBg = activeCardBg,
                                     textColor = textColor,
@@ -479,7 +551,7 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                                 2 -> GenreList(
-                                    genres = genresList,
+                                    genres = filteredGenres,
                                     theme = currentTheme,
                                     cardBg = activeCardBg,
                                     textColor = textColor,
@@ -504,17 +576,16 @@ class MainActivity : ComponentActivity() {
                                     }
                                 )
                                 4 -> VideoList(
-                                    videos = videosList,
-                                    cardBg = activeCardBg,
-                                    textColor = textColor,
-                                    subTextColor = subTextColor,
+                                    videoList = filteredVideos,
                                     onVideoSelect = { video ->
                                         player?.pause()
                                         val intent = Intent(this@MainActivity, VideoPlayerActivity::class.java).apply {
                                             putExtra("EXTRA_VIDEO_URI", video.contentUri.toString())
                                         }
                                         startActivity(intent)
-                                    }
+                                    },
+                                    searchQuery = searchQuery,
+                                    accentColor = currentTheme.accent
                                 )
                                 5 -> AboutView(currentTheme, activeCardBg, textColor)
                             }
@@ -664,7 +735,6 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // --- PLAYLIST DIALOGS ---
                     if (showNewPlaylistDialog) {
                         var newPlaylistName by remember { mutableStateOf("") }
                         AlertDialog(
@@ -787,12 +857,25 @@ class MainActivity : ComponentActivity() {
                                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
                                             ThemeModeOption.values().forEach { mode ->
+                                                val isSelected = themeModeOption == mode
                                                 Button(
                                                     onClick = { themeModeOption = mode },
                                                     modifier = Modifier.weight(1f),
-                                                    colors = ButtonDefaults.buttonColors(containerColor = if (themeModeOption == mode) currentTheme.accent else Color.DarkGray)
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = if (isSelected) currentTheme.accent else activeCardBg,
+                                                        contentColor = if (isSelected) Color.Black else textColor
+                                                    ),
+                                                    border = androidx.compose.foundation.BorderStroke(
+                                                        1.dp,
+                                                        if (isSelected) Color.Transparent else subTextColor.copy(alpha = 0.3f)
+                                                    )
                                                 ) {
-                                                    Text(mode.displayName, fontSize = 10.sp, color = textColor, maxLines = 1)
+                                                    Text(
+                                                        text = mode.displayName,
+                                                        fontSize = 10.sp,
+                                                        color = if (isSelected) Color.Black else textColor,
+                                                        maxLines = 1
+                                                    )
                                                 }
                                             }
                                         }
@@ -916,18 +999,24 @@ class MainActivity : ComponentActivity() {
                                                 showSettingsDialog = false
                                                 folderPicker.launch(null)
                                             },
-                                            modifier = Modifier.fillMaxWidth()
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
                                         ) {
-                                            Text("Select Custom Music Folder")
+                                            Text("Select Custom Music Folder", color = Color.Black)
                                         }
                                     }
                                     item {
-                                        AudioEffectsSettingsSection(textColor = textColor, subTextColor = subTextColor, cardBg = activeCardBg)
+                                        AudioEffectsSettingsSection(textColor = textColor, subTextColor = subTextColor, cardBg = activeCardBg, accentColor = currentTheme.accent)
                                     }
                                 }
                             },
                             confirmButton = {
-                                Button(onClick = { showSettingsDialog = false }) { Text("Close") }
+                                Button(
+                                    onClick = { showSettingsDialog = false },
+                                    colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
+                                ) {
+                                    Text("Close", color = Color.Black)
+                                }
                             },
                             containerColor = activeCardBg
                         )
@@ -1620,13 +1709,12 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
-// --- Upgraded Audio Effects UI (Live Updating) ---
 @Composable
 fun AudioEffectsSettingsSection(
     textColor: Color = Color.Black,
     subTextColor: Color = Color(0xFF444444),
-    cardBg: Color = Color.White.copy(alpha = 0.3f)
+    cardBg: Color = Color.White.copy(alpha = 0.3f),
+    accentColor: Color = Color(0xFFBB86FC)
 ) {
     var eqEnabled by remember { 
         mutableStateOf(PlaybackService.eqEnabled) 
@@ -1657,7 +1745,6 @@ fun AudioEffectsSettingsSection(
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        // --- MASTER TOGGLE ---
         Card(
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -1678,6 +1765,7 @@ fun AudioEffectsSettingsSection(
                 )
                 Switch(
                     checked = eqEnabled,
+                    colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = accentColor),
                     onCheckedChange = { 
                         eqEnabled = it
                         PlaybackService.updateEqEnabled(it)
@@ -1689,7 +1777,6 @@ fun AudioEffectsSettingsSection(
         if (eqEnabled) {
             Spacer(modifier = Modifier.height(8.dp))
 
-            // --- AUDIO BOOST & EFFECTS CARD ---
             Card(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -1702,6 +1789,7 @@ fun AudioEffectsSettingsSection(
                     Text("Bass Boost: ${(bassLevel * 100).toInt()}%", color = textColor, fontSize = 12.sp)
                     Slider(
                         value = bassLevel,
+                        colors = SliderDefaults.colors(thumbColor = accentColor, activeTrackColor = accentColor, inactiveTrackColor = accentColor.copy(alpha = 0.3f)),
                         onValueChange = { 
                             bassLevel = it
                             PlaybackService.updateBassBoost((it * 1000).toInt().toShort()) 
@@ -1711,6 +1799,7 @@ fun AudioEffectsSettingsSection(
                     Text("Virtualizer: ${(virtLevel * 100).toInt()}%", color = textColor, fontSize = 12.sp)
                     Slider(
                         value = virtLevel,
+                        colors = SliderDefaults.colors(thumbColor = accentColor, activeTrackColor = accentColor, inactiveTrackColor = accentColor.copy(alpha = 0.3f)),
                         onValueChange = { 
                             virtLevel = it
                             PlaybackService.updateVirtualizer((it * 1000).toInt().toShort()) 
@@ -1720,6 +1809,7 @@ fun AudioEffectsSettingsSection(
                     Text("Pre-amp Gain: ${(gainLevel * 100).toInt()}%", color = textColor, fontSize = 12.sp)
                     Slider(
                         value = gainLevel,
+                        colors = SliderDefaults.colors(thumbColor = accentColor, activeTrackColor = accentColor, inactiveTrackColor = accentColor.copy(alpha = 0.3f)),
                         onValueChange = { 
                             gainLevel = it
                             PlaybackService.updateGain((it * 1000).toInt()) 
@@ -1730,7 +1820,6 @@ fun AudioEffectsSettingsSection(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // --- EQUALIZER BANDS CARD ---
             Card(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = cardBg),
@@ -1769,6 +1858,7 @@ fun AudioEffectsSettingsSection(
                             Slider(
                                 value = level,
                                 valueRange = -15f..15f,
+                                colors = SliderDefaults.colors(thumbColor = accentColor, activeTrackColor = accentColor, inactiveTrackColor = accentColor.copy(alpha = 0.3f)),
                                 onValueChange = { newLvl ->
                                     eqBands[index] = newLvl
                                     PlaybackService.updateBand(index, newLvl.toInt().toShort())
@@ -1784,107 +1874,70 @@ fun AudioEffectsSettingsSection(
 }
 
 
+
+data class VideoFolder(
+    val name: String,
+    val videos: List<VideoItem>
+)
+
 @Composable
 fun VideoList(
-    videos: List<VideoItem>,
-    cardBg: Color,
-    textColor: Color,
-    subTextColor: Color,
-    onVideoSelect: (VideoItem) -> Unit
+    videoList: List<VideoItem>,
+    onVideoSelect: (VideoItem) -> Unit,
+    searchQuery: String = "",
+    accentColor: Color = Color.Cyan
 ) {
-    val context = LocalContext.current
-    if (videos.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("No videos found on device", color = subTextColor, fontSize = 14.sp)
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(vertical = 8.dp)
-        ) {
-            items(videos.size) { index ->
-                val video = videos[index]
+    val filteredVideos = videoList.filter {
+        it.title.contains(searchQuery, ignoreCase = true) ||
+        it.path.contains(searchQuery, ignoreCase = true)
+    }
+    val videoFolders = filteredVideos.groupBy { 
+        java.io.File(it.path).parentFile?.name ?: "Internal Storage" 
+    }
 
-                var thumbnailBitmap by remember(video.contentUri) {
-                    mutableStateOf<Bitmap?>(null)
-                }
-
-                LaunchedEffect(video.contentUri) {
-                    withContext(Dispatchers.IO) {
-                        try {
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                                thumbnailBitmap = context.contentResolver.loadThumbnail(
-                                    video.contentUri,
-                                    android.util.Size(120, 120),
-                                    null
-                                )
-                            } else {
-                                val retriever = MediaMetadataRetriever()
-                                retriever.setDataSource(context, video.contentUri)
-                                thumbnailBitmap = retriever.frameAtTime
-                                retriever.release()
-                            }
-                        } catch (e: Exception) {
-                            thumbnailBitmap = null
-                        }
-                    }
-                }
-
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = Modifier.fillMaxSize().padding(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        videoFolders.forEach { (folderName, videosInFolder) ->
+            item(span = { GridItemSpan(2) }) {
+                Text(
+                    text = "📁 $folderName (${videosInFolder.size} items)",
+                    fontSize = 15.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                    color = accentColor,
+                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 4.dp)
+                )
+            }
+            items(videosInFolder) { video ->
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+                        .height(110.dp)
                         .clickable { onVideoSelect(video) },
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF222222)),
-                    colors = CardDefaults.cardColors(containerColor = cardBg)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.4f))
                 ) {
-                    Row(
-                        modifier = Modifier.padding(12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        if (thumbnailBitmap != null) {
-                            Image(
-                                bitmap = thumbnailBitmap!!.asImageBitmap(),
-                                contentDescription = video.title,
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                            )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(8.dp))
-                                    .background(cardBg.copy(alpha = 0.5f)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = null,
-                                    tint = textColor,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.width(12.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(10.dp),
+                            verticalArrangement = Arrangement.Bottom
+                        ) {
                             Text(
                                 text = video.title,
-                                color = textColor,
-                                fontSize = 14.sp,
-                                maxLines = 1
+                                color = Color.White,
+                                fontSize = 13.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                                maxLines = 2
                             )
-                            val sizeMb = video.sizeBytes / (1024 * 1024)
                             Text(
-                                text = "${sizeMb} MB",
-                                color = subTextColor,
-                                fontSize = 12.sp
+                                text = "${(video.sizeBytes / (1024 * 1024))} MB",
+                                color = Color.LightGray,
+                                fontSize = 10.sp
                             )
                         }
                     }
