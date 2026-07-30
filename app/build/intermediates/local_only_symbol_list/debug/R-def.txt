@@ -1,0 +1,5 @@
+R_DEF: Internal format may change without notice
+local
+color purple_background
+drawable ic_music_note
+mipmap ic_launcher

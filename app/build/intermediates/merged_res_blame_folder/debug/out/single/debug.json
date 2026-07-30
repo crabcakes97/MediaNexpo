@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "com.medianexpo.player.app-merged_res-45:/drawable_ic_music_note.xml.flat",
+        "source": "com.medianexpo.player.app-main-47:/drawable/ic_music_note.xml"
+    },
+    {
+        "merged": "com.medianexpo.player.app-merged_res-45:/mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "com.medianexpo.player.app-main-47:/mipmap-anydpi-v26/ic_launcher.xml"
+    }
+]
