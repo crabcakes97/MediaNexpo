@@ -1,0 +1,13 @@
+# Gradle / Android Build directories
+.gradle/
+/app/build/
+/build/
+/out/
+
+# IDE & Local files
+.idea/
+.DS_Store
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
