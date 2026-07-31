@@ -62,6 +62,7 @@ import com.google.common.util.concurrent.MoreExecutors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
+import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -274,7 +275,6 @@ class MainActivity : ComponentActivity() {
     private val player: Player?
         get() = if (controllerFuture?.isDone == true) controllerFuture?.get() else null
 
-    private val fftDataState = mutableStateListOf<Float>()
 
     private val allTracks = mutableStateListOf<MusicTrack>()
     private val displayTracks = mutableStateListOf<MusicTrack>()
@@ -308,6 +308,16 @@ class MainActivity : ComponentActivity() {
 
     private var isSearchOpen by mutableStateOf(false)
     private var searchQuery by mutableStateOf("")
+
+    // Audiobook / Podcast smart resume + speed + pitch
+    private var playbackSpeed by mutableStateOf(1.0f)
+    private var playbackPitch by mutableStateOf(1.0f)
+    private val speedOptions = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f)
+    private val pitchOptions = listOf(0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f)
+    private var showSpeedMenu by mutableStateOf(false)
+    private var showPitchMenu by mutableStateOf(false)
+
+    private lateinit var wifiDirect: WifiDirectShareManager
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -351,22 +361,33 @@ class MainActivity : ComponentActivity() {
             })
         }, MoreExecutors.directExecutor())
 
+        // Restore last used playback speed + pitch
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        playbackSpeed = prefs.getFloat("playback_speed", 1.0f)
+        playbackPitch = prefs.getFloat("playback_pitch", 1.0f)
+
         requestAudioPermissions()
+        wifiDirect = WifiDirectShareManager(applicationContext)
 
         setContent {
+            // Position/slider only — visualizer polls FFT by itself (no list recomposition).
+            var saveCounter by remember { mutableIntStateOf(0) }
             LaunchedEffect(Unit) {
                 while (true) {
-                    player?.let { p ->
+                    val p = player
+                    if (p != null) {
                         isPlayingState = p.isPlaying
-                        if (p.isPlaying) {
-                            currentPositionMs = p.currentPosition.coerceAtLeast(0L)
-                            totalDurationMs = p.duration.coerceAtLeast(0L)
-                            
-                            fftDataState.clear()
-                            fftDataState.addAll(PlaybackService.latestFftData.toList())
+                        currentPositionMs = p.currentPosition.coerceAtLeast(0L)
+                        totalDurationMs = p.duration.coerceAtLeast(0L)
+                        saveCounter++
+                        if (saveCounter >= 20) {
+                            saveCounter = 0
+                            if (p.isPlaying) {
+                                currentTrack?.let { savePlaybackPosition(it.uri, currentPositionMs) }
+                            }
                         }
                     }
-                    delay(30)
+                    delay(200) // slider does not need high fps
                 }
             }
 
@@ -625,7 +646,6 @@ class MainActivity : ComponentActivity() {
                                         MusicVisualizerView(
                                             isPlaying = isPlayingState,
                                             style = selectedVisualizer,
-                                            fftValues = fftDataState,
                                             accentColor = currentTheme.accent
                                         )
                                         Spacer(modifier = Modifier.height(8.dp))
@@ -635,25 +655,12 @@ class MainActivity : ComponentActivity() {
                                         verticalAlignment = Alignment.CenterVertically,
                                         modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        if (track.artwork != null) {
-                                            Image(
-                                                bitmap = track.artwork.asImageBitmap(),
-                                                contentDescription = null,
-                                                modifier = Modifier
-                                                    .size(if (isPlayerMinimized) 36.dp else 52.dp)
-                                                    .clip(RoundedCornerShape(6.dp))
-                                            )
-                                        } else {
-                                            Box(
-                                                modifier = Modifier
-                                                    .size(if (isPlayerMinimized) 36.dp else 52.dp)
-                                                    .clip(RoundedCornerShape(6.dp))
-                                                    .background(currentTheme.accent.copy(alpha = 0.2f)),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                Icon(IconMusicNote, contentDescription = null, tint = currentTheme.accent, modifier = Modifier.size(18.dp))
-                                            }
-                                        }
+                                        AsyncAlbumArt(
+                                            uri = track.uri,
+                                            existing = track.artwork,
+                                            accent = currentTheme.accent,
+                                            sizeDp = if (isPlayerMinimized) 36 else 52
+                                        )
 
                                         Spacer(modifier = Modifier.width(12.dp))
 
@@ -717,7 +724,16 @@ class MainActivity : ComponentActivity() {
                                                 Icon(IconSkipPrevious, contentDescription = "Previous", tint = textColor)
                                             }
                                             Button(
-                                                onClick = { player?.let { if (it.isPlaying) it.pause() else it.play() } },
+                                                onClick = {
+                                                    player?.let {
+                                                        if (it.isPlaying) {
+                                                            currentTrack?.let { t -> savePlaybackPosition(t.uri, currentPositionMs) }
+                                                            it.pause()
+                                                        } else {
+                                                            it.play()
+                                                        }
+                                                    }
+                                                },
                                                 colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
                                             ) {
                                                 Icon(imageVector = if (isPlayingState) IconPause else IconPlayArrow, contentDescription = "Play/Pause", tint = Color.Black)
@@ -727,6 +743,91 @@ class MainActivity : ComponentActivity() {
                                             }
                                             IconButton(onClick = { cycleRepeatMode() }) {
                                                 Icon(IconRepeat, contentDescription = "Repeat", tint = if (repeatModeState != Player.REPEAT_MODE_OFF) currentTheme.accent else subTextColor)
+                                            }
+                                        }
+
+                                        // Speed + Pitch controls
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.Center,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text("Speed", color = subTextColor, fontSize = 12.sp)
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Box {
+                                                OutlinedButton(
+                                                    onClick = { showSpeedMenu = true },
+                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                                    border = androidx.compose.foundation.BorderStroke(1.dp, currentTheme.accent.copy(alpha = 0.5f))
+                                                ) {
+                                                    Text(
+                                                        text = if (playbackSpeed == 1.0f) "1x" else "${playbackSpeed}x",
+                                                        color = currentTheme.accent,
+                                                        fontSize = 13.sp,
+                                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                                    )
+                                                }
+                                                DropdownMenu(
+                                                    expanded = showSpeedMenu,
+                                                    onDismissRequest = { showSpeedMenu = false },
+                                                    modifier = Modifier.background(activeCardBg)
+                                                ) {
+                                                    speedOptions.forEach { speed ->
+                                                        DropdownMenuItem(
+                                                            text = {
+                                                                Text(
+                                                                    text = if (speed == 1.0f) "1x (Normal)" else "${speed}x",
+                                                                    color = if (playbackSpeed == speed) currentTheme.accent else textColor,
+                                                                    fontSize = 14.sp
+                                                                )
+                                                            },
+                                                            onClick = {
+                                                                setSpeed(speed)
+                                                                showSpeedMenu = false
+                                                            }
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.width(14.dp))
+                                            Text("Pitch", color = subTextColor, fontSize = 12.sp)
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            Box {
+                                                OutlinedButton(
+                                                    onClick = { showPitchMenu = true },
+                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
+                                                    border = androidx.compose.foundation.BorderStroke(1.dp, currentTheme.accent.copy(alpha = 0.5f))
+                                                ) {
+                                                    Text(
+                                                        text = if (playbackPitch == 1.0f) "1x" else "${playbackPitch}x",
+                                                        color = currentTheme.accent,
+                                                        fontSize = 13.sp,
+                                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                                    )
+                                                }
+                                                DropdownMenu(
+                                                    expanded = showPitchMenu,
+                                                    onDismissRequest = { showPitchMenu = false },
+                                                    modifier = Modifier.background(activeCardBg)
+                                                ) {
+                                                    pitchOptions.forEach { pitch ->
+                                                        DropdownMenuItem(
+                                                            text = {
+                                                                Text(
+                                                                    text = if (pitch == 1.0f) "1x (Normal)" else "${pitch}x",
+                                                                    color = if (playbackPitch == pitch) currentTheme.accent else textColor,
+                                                                    fontSize = 14.sp
+                                                                )
+                                                            },
+                                                            onClick = {
+                                                                setPitch(pitch)
+                                                                showPitchMenu = false
+                                                            }
+                                                        )
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -812,13 +913,49 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             confirmButton = {
-                                Button(
-                                    onClick = {
-                                        showNewPlaylistDialog = true
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
-                                ) {
-                                    Text("➕ New Playlist", color = Color.Black)
+                                Row {
+                                    Button(
+                                        onClick = {
+                                            // Prefer Wi‑Fi Direct when active; else LAN HTTP share
+                                            if (wifiDirect.isActive) {
+                                                try {
+                                                    val cache = java.io.File(cacheDir, "wifi_direct_out").apply { mkdirs() }
+                                                    val name = track.name.ifBlank { track.title }
+                                                        .replace(Regex("[^a-zA-Z0-9._-]"), "_")
+                                                    val out = java.io.File(cache, name)
+                                                    contentResolver.openInputStream(track.uri)?.use { input ->
+                                                        java.io.FileOutputStream(out).use { output -> input.copyTo(output) }
+                                                    }
+                                                    wifiDirect.queueSend(out, name)
+                                                    trackToAddToPlaylist = null
+                                                    showSettingsDialog = true
+                                                } catch (e: Exception) {
+                                                    android.util.Log.e("Share", "Wi‑Fi Direct send prepare failed", e)
+                                                }
+                                            } else {
+                                                LocalShareService.start(
+                                                    this@MainActivity,
+                                                    shareUri = track.uri,
+                                                    shareName = track.name.ifBlank { track.title }
+                                                )
+                                                trackToAddToPlaylist = null
+                                                showSettingsDialog = true
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
+                                    ) {
+                                        Text(
+                                            if (wifiDirect.isActive) "Share Direct" else "Share Wi‑Fi",
+                                            color = Color.Black
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Button(
+                                        onClick = { showNewPlaylistDialog = true },
+                                        colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
+                                    ) {
+                                        Text("New Playlist", color = Color.Black)
+                                    }
                                 }
                             },
                             dismissButton = {
@@ -847,7 +984,7 @@ class MainActivity : ComponentActivity() {
                                             modifier = Modifier.fillMaxWidth(),
                                             colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
                                         ) {
-                                            Text("🔄 Rescan Media Library", color = Color.Black)
+                                            Text("Rescan Media Library", color = Color.Black)
                                         }
 
                                         Spacer(modifier = Modifier.height(12.dp))
@@ -896,7 +1033,7 @@ class MainActivity : ComponentActivity() {
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                     modifier = Modifier.fillMaxWidth()
                                                 ) {
-                                                    Text("📊 Visualizer: ${selectedVisualizer.displayName}", color = currentTheme.accent, fontSize = 13.sp)
+                                                    Text("Visualizer: ${selectedVisualizer.displayName}", color = currentTheme.accent, fontSize = 13.sp)
                                                     Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = currentTheme.accent)
                                                 }
                                             }
@@ -941,7 +1078,7 @@ class MainActivity : ComponentActivity() {
                                                     horizontalArrangement = Arrangement.SpaceBetween,
                                                     modifier = Modifier.fillMaxWidth()
                                                 ) {
-                                                    Text("🎨 Theme: ${currentTheme.displayName}", color = currentTheme.accent, fontSize = 13.sp)
+                                                    Text("Theme: ${currentTheme.displayName}", color = currentTheme.accent, fontSize = 13.sp)
                                                     Box(
                                                         modifier = Modifier
                                                             .size(16.dp)
@@ -1006,6 +1143,173 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                     item {
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text("Local Wi‑Fi Sharing:", color = subTextColor, fontSize = 14.sp)
+                                        Spacer(modifier = Modifier.height(4.dp))
+
+                                        var shareRunning by remember {
+                                            mutableStateOf(LocalShareService.isRunning)
+                                        }
+                                        var shareUrl by remember {
+                                            mutableStateOf(LocalShareService.localUrl)
+                                        }
+                                        var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+                                        // Keep URL/QR in sync after service starts
+                                        LaunchedEffect(shareRunning) {
+                                            if (shareRunning) {
+                                                for (i in 0 until 20) {
+                                                    val url = LocalShareService.localUrl
+                                                    if (url.isNotBlank() && !url.contains("0.0.0.0")) {
+                                                        shareUrl = url
+                                                        break
+                                                    }
+                                                    delay(100)
+                                                }
+                                                shareUrl = LocalShareService.localUrl
+                                                if (shareUrl.isNotBlank()) {
+                                                    qrBitmap = generateQrBitmap(shareUrl, 512)
+                                                }
+                                            } else {
+                                                qrBitmap = null
+                                                shareUrl = ""
+                                            }
+                                        }
+
+                                        Button(
+                                            onClick = {
+                                                if (shareRunning) {
+                                                    LocalShareService.stop(this@MainActivity)
+                                                    shareRunning = false
+                                                } else {
+                                                    LocalShareService.start(this@MainActivity)
+                                                    shareRunning = true
+                                                    shareUrl = LocalShareService.localUrl
+                                                }
+                                            },
+                                            modifier = Modifier.fillMaxWidth(),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = if (shareRunning) Color(0xFFB00020) else currentTheme.accent
+                                            )
+                                        ) {
+                                            Text(
+                                                if (shareRunning) "Stop Receive Mode" else "Start Receive Mode",
+                                                color = Color.Black
+                                            )
+                                        }
+
+                                        if (shareRunning) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                "Others on your Wi‑Fi can open:",
+                                                color = subTextColor,
+                                                fontSize = 12.sp
+                                            )
+                                            Text(
+                                                text = shareUrl.ifBlank { "Starting server…" },
+                                                color = currentTheme.accent,
+                                                fontSize = 14.sp,
+                                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .background(Color.White, RoundedCornerShape(12.dp))
+                                                    .padding(16.dp),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (qrBitmap != null) {
+                                                    Image(
+                                                        bitmap = qrBitmap!!.asImageBitmap(),
+                                                        contentDescription = "QR code",
+                                                        modifier = Modifier.size(200.dp)
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        "Generating QR…",
+                                                        color = Color.Gray,
+                                                        fontSize = 12.sp
+                                                    )
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(
+                                                "Scan this QR on another phone (same Wi‑Fi), or type the URL.",
+                                                color = subTextColor,
+                                                fontSize = 11.sp
+                                            )
+                                            if (LocalShareService.lastReceivedName != null) {
+                                                Text(
+                                                    "Last received: ${LocalShareService.lastReceivedName}",
+                                                    color = currentTheme.accent,
+                                                    fontSize = 12.sp
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text(
+                                            "Send a song: long-press a track → Share on Wi‑Fi",
+                                            color = subTextColor,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                    item {
+                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Text("Wi‑Fi Direct (no router):", color = subTextColor, fontSize = 14.sp)
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(wifiDirect.status, color = currentTheme.accent, fontSize = 12.sp)
+                                        Spacer(modifier = Modifier.height(6.dp))
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Button(
+                                                onClick = {
+                                                    if (wifiDirect.isActive) wifiDirect.stop()
+                                                    else wifiDirect.start()
+                                                },
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = if (wifiDirect.isActive) Color(0xFFB00020) else currentTheme.accent
+                                                )
+                                            ) {
+                                                Text(
+                                                    if (wifiDirect.isActive) "Stop Direct" else "Start Direct",
+                                                    color = Color.Black
+                                                )
+                                            }
+                                            if (wifiDirect.isActive) {
+                                                Button(
+                                                    onClick = { wifiDirect.discover() },
+                                                    colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
+                                                ) {
+                                                    Text("Scan", color = Color.Black)
+                                                }
+                                            }
+                                        }
+                                        if (wifiDirect.peers.isNotEmpty()) {
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text("Tap a device to connect:", color = subTextColor, fontSize = 12.sp)
+                                            wifiDirect.peers.forEach { device ->
+                                                Card(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .padding(vertical = 3.dp)
+                                                        .clickable { wifiDirect.connect(device) },
+                                                    colors = CardDefaults.cardColors(containerColor = activeCardBg)
+                                                ) {
+                                                    Column(Modifier.padding(10.dp)) {
+                                                        Text(device.deviceName.ifBlank { "Unknown device" }, color = textColor, fontSize = 13.sp)
+                                                        Text(device.deviceAddress, color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.height(4.dp))
+                                        Text(
+                                            "Both phones: Start Direct → Scan → connect. Then long-press a track → Share Wi‑Fi Direct.",
+                                            color = subTextColor,
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                    item {
                                         AudioEffectsSettingsSection(textColor = textColor, subTextColor = subTextColor, cardBg = activeCardBg, accentColor = currentTheme.accent)
                                     }
                                 }
@@ -1043,6 +1347,12 @@ class MainActivity : ComponentActivity() {
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
         permissions.add(Manifest.permission.RECORD_AUDIO)
+        // Wi‑Fi Direct
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        } else {
+            permissions.add(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
 
         val missing = permissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
@@ -1129,164 +1439,137 @@ class MainActivity : ComponentActivity() {
     private fun MusicVisualizerView(
         isPlaying: Boolean,
         style: VisualizerStyle,
-        fftValues: List<Float>,
         accentColor: Color
     ) {
+        // Display values (smoothed) — animate toward targets every frame
+        val display = remember { FloatArray(24) { 0.08f } }
+        var frameTick by remember { mutableIntStateOf(0) }
+
+        LaunchedEffect(isPlaying) {
+            if (!isPlaying) {
+                for (i in display.indices) display[i] = 0.08f
+                frameTick++
+                return@LaunchedEffect
+            }
+            // Drive at display refresh — smooth lerp, not stepped FFT snaps
+            while (true) {
+                withFrameNanos {
+                    val latest = PlaybackService.latestFftData
+                    val n = minOf(display.size, if (latest.isNotEmpty()) latest.size else 0)
+                    if (n > 0) {
+                        for (i in 0 until n) {
+                            val target = latest[i].coerceIn(0.05f, 1f)
+                            // Fast attack, slower decay — looks lively
+                            val speed = if (target > display[i]) 0.55f else 0.28f
+                            display[i] += (target - display[i]) * speed
+                        }
+                    } else {
+                        for (i in display.indices) {
+                            display[i] += (0.08f - display[i]) * 0.2f
+                        }
+                    }
+                    frameTick++
+                }
+            }
+        }
+
+        // Read frameTick so Canvas invalidates every frame
+        val drawVersion = frameTick
+
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .height(72.dp)
                 .clip(RoundedCornerShape(8.dp))
-                .background(Color.Black.copy(alpha = 0.35f))
+                .background(Color.Black.copy(alpha = 0.25f))
         ) {
+            @Suppress("UNUSED_EXPRESSION")
+            drawVersion
             val width = size.width
             val height = size.height
-
-            if (!isPlaying || fftValues.isEmpty()) {
-                drawLine(
-                    color = accentColor.copy(alpha = 0.3f),
-                    start = Offset(0f, height / 2),
-                    end = Offset(width, height / 2),
-                    strokeWidth = 2.dp.toPx()
-                )
-                return@Canvas
-            }
+            val barCount = 24
+            val gap = 2f
+            val barWidth = ((width - gap * (barCount - 1)) / barCount).coerceAtLeast(2f)
 
             when (style) {
-                VisualizerStyle.BARS -> {
-                    val barCount = fftValues.size
-                    val barWidth = width / (barCount * 1.5f)
+                VisualizerStyle.BARS, VisualizerStyle.MIRROR -> {
+                    val mid = height / 2f
                     for (i in 0 until barCount) {
-                        val amplitude = fftValues[i]
-                        val barHeight = (height * amplitude).coerceAtLeast(4f)
-                        val x = i * (barWidth * 1.5f) + barWidth / 2
-                        drawLine(
-                            color = accentColor,
-                            start = Offset(x, height),
-                            end = Offset(x, height - barHeight),
-                            strokeWidth = barWidth
-                        )
-                    }
-                }
-                VisualizerStyle.WAVE -> {
-                    val path = Path()
-                    path.moveTo(0f, height / 2)
-                    val points = fftValues.size
-                    for (i in 0 until points) {
-                        val x = (width / (points - 1)) * i
-                        val amplitude = fftValues[i]
-                        val y = height / 2 + (amplitude * (height / 2f) * if (i % 2 == 0) 1f else -1f)
-                        path.lineTo(x, y)
-                    }
-                    drawPath(
-                        path = path,
-                        color = accentColor,
-                        style = Stroke(width = 3.dp.toPx())
-                    )
-                }
-                VisualizerStyle.PULSE -> {
-                    val averageAmplitude = fftValues.average().toFloat()
-                    val pulseRadius = (height / 2.5f) * (averageAmplitude * 1.2f + 0.3f)
-                    drawCircle(
-                        color = accentColor.copy(alpha = 0.85f),
-                        radius = pulseRadius.coerceIn(4f, height / 2f),
-                        center = Offset(width / 2, height / 2),
-                        style = Stroke(width = 3.dp.toPx())
-                    )
-                }
-                VisualizerStyle.MIRROR -> {
-                    val count = fftValues.size
-                    val barWidth = width / (count * 1.4f)
-                    for (i in 0 until count) {
-                        val amp = fftValues[i]
-                        val barLen = (height / 2f) * amp
-                        val x = i * (barWidth * 1.4f) + barWidth / 2
-                        drawLine(
-                            color = accentColor,
-                            start = Offset(x, height / 2 - barLen),
-                            end = Offset(x, height / 2 + barLen),
-                            strokeWidth = barWidth
-                        )
-                    }
-                }
-                VisualizerStyle.DOTS -> {
-                    val cols = fftValues.size
-                    val rows = 5
-                    val dotRadius = 3.dp.toPx()
-                    val colSpacing = width / cols
-                    val rowSpacing = height / (rows + 1)
-                    for (c in 0 until cols) {
-                        val amp = fftValues[c]
-                        val activeDots = (amp * rows).toInt().coerceIn(1, rows)
-                        for (r in 0 until rows) {
-                            val dotY = height - ((r + 1) * rowSpacing)
-                            val dotX = c * colSpacing + colSpacing / 2
-                            val isLit = r < activeDots
-                            drawCircle(
-                                color = if (isLit) accentColor else accentColor.copy(alpha = 0.15f),
-                                radius = dotRadius,
-                                center = Offset(dotX, dotY)
+                        val amp = display[i % display.size]
+                        val x = i * (barWidth + gap)
+                        if (style == VisualizerStyle.MIRROR) {
+                            val h = (mid * amp).coerceAtLeast(2f)
+                            drawRect(accentColor, Offset(x, mid - h), androidx.compose.ui.geometry.Size(barWidth, h))
+                            drawRect(accentColor.copy(alpha = 0.45f), Offset(x, mid), androidx.compose.ui.geometry.Size(barWidth, h))
+                        } else {
+                            val barHeight = (height * amp).coerceAtLeast(3f)
+                            drawRect(
+                                color = accentColor,
+                                topLeft = Offset(x, height - barHeight),
+                                size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
                             )
                         }
                     }
                 }
-                VisualizerStyle.RADAR -> {
-                    val centerX = width / 2
-                    val centerY = height / 2
-                    val count = fftValues.size
-                    val angleStep = (2 * Math.PI / count).toFloat()
-                    for (i in 0 until count) {
-                        val amp = fftValues[i]
-                        val radius = (height / 2.2f) * amp
-                        val angle = i * angleStep
-                        val endX = centerX + (radius * cos(angle.toDouble())).toFloat()
-                        val endY = centerY + (radius * sin(angle.toDouble())).toFloat()
-                        drawLine(
-                            color = accentColor,
-                            start = Offset(centerX, centerY),
-                            end = Offset(endX, endY),
-                            strokeWidth = 2.5.dp.toPx()
-                        )
-                    }
-                }
-                VisualizerStyle.RIBBON -> {
+                VisualizerStyle.WAVE, VisualizerStyle.RIBBON -> {
                     val path = Path()
-                    path.moveTo(0f, height)
-                    val points = fftValues.size
-                    for (i in 0 until points) {
-                        val x = (width / (points - 1)) * i
-                        val y = height - (fftValues[i] * height)
-                        path.lineTo(x, y)
+                    for (i in 0 until barCount) {
+                        val x = (i.toFloat() / (barCount - 1)) * width
+                        val y = height - (display[i] * height)
+                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
                     }
-                    path.lineTo(width, height)
-                    path.close()
-                    drawPath(
-                        path = path,
-                        color = accentColor.copy(alpha = 0.45f)
+                    val strokeW = if (style == VisualizerStyle.RIBBON) 4f else 3f
+                    drawPath(path, accentColor.copy(alpha = 0.9f), style = Stroke(width = strokeW))
+                }
+                VisualizerStyle.PULSE -> {
+                    var sum = 0f
+                    for (v in display) sum += v
+                    val avg = sum / display.size
+                    drawCircle(
+                        color = accentColor.copy(alpha = 0.65f),
+                        radius = (height / 3f) + (avg * height / 3f),
+                        center = Offset(width / 2, height / 2)
                     )
                 }
-                VisualizerStyle.PARTICLES -> {
+                VisualizerStyle.DOTS -> {
+                    val cols = 16
+                    val cellW = width / cols
+                    for (c in 0 until cols) {
+                        val amp = display[c % display.size]
+                        val rows = (amp * 6).toInt().coerceIn(1, 6)
+                        for (r in 0 until rows) {
+                            drawCircle(
+                                color = accentColor,
+                                radius = cellW * 0.2f,
+                                center = Offset(c * cellW + cellW / 2, height - (r + 1) * (height / 7f))
+                            )
+                        }
+                    }
+                }
+                VisualizerStyle.RADAR, VisualizerStyle.PARTICLES -> {
+                    val count = 16
                     val centerX = width / 2
                     val centerY = height / 2
-                    val count = fftValues.size
                     val angleStep = (2 * Math.PI / count).toFloat()
                     for (i in 0 until count) {
-                        val amp = fftValues[i]
-                        val baseRadius = (height / 4f)
-                        val dist = baseRadius + (amp * (height / 3f))
+                        val amp = display[i % display.size]
+                        val base = height / 5f
+                        val dist = base + amp * (height / 3f)
                         val angle = i * angleStep
                         val px = centerX + (dist * cos(angle.toDouble())).toFloat()
                         val py = centerY + (dist * sin(angle.toDouble())).toFloat()
-                        drawCircle(
-                            color = accentColor,
-                            radius = (amp * 4.5.dp.toPx()).coerceAtLeast(2.dp.toPx()),
-                            center = Offset(px, py)
-                        )
+                        val r = if (style == VisualizerStyle.PARTICLES) {
+                            2.dp.toPx() + amp * 5.dp.toPx()
+                        } else {
+                            (amp * 4.5.dp.toPx()).coerceAtLeast(2.dp.toPx())
+                        }
+                        drawCircle(accentColor, r, Offset(px, py))
                     }
                 }
             }
         }
     }
+
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
@@ -1304,7 +1587,10 @@ class MainActivity : ComponentActivity() {
             }
         } else {
             LazyColumn {
-                items(tracks) { track ->
+                items(
+                    items = tracks,
+                    key = { it.uri.toString() }
+                ) { track ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1321,25 +1607,12 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            if (track.artwork != null) {
-                                Image(
-                                    bitmap = track.artwork.asImageBitmap(),
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(RoundedCornerShape(6.dp))
-                                        .background(currentTheme.accent.copy(alpha = 0.15f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(IconMusicNote, contentDescription = null, tint = currentTheme.accent, modifier = Modifier.size(20.dp))
-                                }
-                            }
+                            AsyncAlbumArt(
+                                uri = track.uri,
+                                existing = track.artwork,
+                                accent = currentTheme.accent,
+                                sizeDp = 40
+                            )
 
                             Spacer(modifier = Modifier.width(12.dp))
 
@@ -1415,7 +1688,7 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = theme.accent)
             ) {
-                Text("➕ Create New Playlist", color = Color.Black)
+                Text("Create New Playlist", color = Color.Black)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -1466,7 +1739,7 @@ class MainActivity : ComponentActivity() {
                     Spacer(modifier = Modifier.height(12.dp))
                     Button(
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/crabcakes97/LocalMusicPlayer/"))
+                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/crabcakes97/MediaNexpo"))
                             context.startActivity(intent)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = theme.accent)
@@ -1587,13 +1860,28 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun decodeSampledBitmap(data: ByteArray, maxSize: Int = 256): Bitmap? {
+        return try {
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(data, 0, data.size, bounds)
+            var sample = 1
+            while (bounds.outWidth / sample > maxSize || bounds.outHeight / sample > maxSize) {
+                sample *= 2
+            }
+            val opts = BitmapFactory.Options().apply { inSampleSize = sample }
+            BitmapFactory.decodeByteArray(data, 0, data.size, opts)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
     private fun extractArtwork(uri: Uri): Bitmap? {
         val retriever = MediaMetadataRetriever()
         return try {
             retriever.setDataSource(this, uri)
             val embeddedPicture = retriever.embeddedPicture
             if (embeddedPicture != null) {
-                BitmapFactory.decodeByteArray(embeddedPicture, 0, embeddedPicture.size)
+                decodeSampledBitmap(embeddedPicture, 256)
             } else null
         } catch (e: Exception) {
             null
@@ -1616,7 +1904,7 @@ class MainActivity : ComponentActivity() {
             retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_GENRE)?.let { genre = it }
             val embeddedPicture = retriever.embeddedPicture
             if (embeddedPicture != null) {
-                artwork = BitmapFactory.decodeByteArray(embeddedPicture, 0, embeddedPicture.size)
+                artwork = decodeSampledBitmap(embeddedPicture, 256)
             }
         } catch (e: Exception) {
             Log.e("LocalMusicPlayer", "Failed to extract metadata for $uri", e)
@@ -1627,11 +1915,63 @@ class MainActivity : ComponentActivity() {
         return MusicTrack(fallbackName, title, artist, genre, uri, artwork)
     }
 
+    // ── Smart resume (audiobook / podcast) ──────────────────────────────
+    private fun savePlaybackPosition(uri: Uri, positionMs: Long) {
+        // Only save if we've listened past 5 seconds and aren't near the end
+        if (positionMs < 5_000L) return
+        if (totalDurationMs > 0 && positionMs > totalDurationMs - 10_000L) {
+            // Near the end – clear so next open starts from beginning
+            getSharedPreferences("resume_positions", MODE_PRIVATE)
+                .edit().remove(uri.toString()).apply()
+            return
+        }
+        getSharedPreferences("resume_positions", MODE_PRIVATE)
+            .edit()
+            .putLong(uri.toString(), positionMs)
+            .apply()
+    }
+
+    private fun loadPlaybackPosition(uri: Uri): Long {
+        return getSharedPreferences("resume_positions", MODE_PRIVATE)
+            .getLong(uri.toString(), 0L)
+    }
+
+    private fun clearPlaybackPosition(uri: Uri) {
+        getSharedPreferences("resume_positions", MODE_PRIVATE)
+            .edit().remove(uri.toString()).apply()
+    }
+
+    private fun applyPlaybackParams() {
+        player?.playbackParameters = androidx.media3.common.PlaybackParameters(
+            playbackSpeed,
+            playbackPitch
+        )
+    }
+
+    private fun setSpeed(speed: Float) {
+        playbackSpeed = speed
+        applyPlaybackParams()
+        getSharedPreferences("prefs", MODE_PRIVATE)
+            .edit().putFloat("playback_speed", speed).apply()
+    }
+
+    private fun setPitch(pitch: Float) {
+        playbackPitch = pitch
+        applyPlaybackParams()
+        getSharedPreferences("prefs", MODE_PRIVATE)
+            .edit().putFloat("playback_pitch", pitch).apply()
+    }
+
     private fun playTrack(track: MusicTrack) {
+        // Save position of the previous track before switching
+        currentTrack?.let { prev ->
+            if (currentPositionMs > 0) savePlaybackPosition(prev.uri, currentPositionMs)
+        }
+
         currentTrack = track
         player?.stop()
         player?.clearMediaItems()
-        
+
         val items = displayTracks.map { trackItem ->
             val metadata = MediaMetadata.Builder()
                 .setTitle(trackItem.title)
@@ -1645,12 +1985,14 @@ class MainActivity : ComponentActivity() {
                 .build()
         }
         player?.setMediaItems(items)
-        
+
         val startIndex = displayTracks.indexOf(track)
+        val resumePos = loadPlaybackPosition(track.uri)
         if (startIndex >= 0) {
-            player?.seekTo(startIndex, 0L)
+            player?.seekTo(startIndex, resumePos.coerceAtLeast(0L))
         }
-        
+
+        applyPlaybackParams()
         player?.prepare()
         player?.playWhenReady = true
         player?.play()
@@ -1661,7 +2003,7 @@ class MainActivity : ComponentActivity() {
         currentTrack = playlist.tracks.first()
         player?.stop()
         player?.clearMediaItems()
-        
+
         val items = playlist.tracks.map { trackItem ->
             val metadata = MediaMetadata.Builder()
                 .setTitle(trackItem.title)
@@ -1675,8 +2017,10 @@ class MainActivity : ComponentActivity() {
                 .build()
         }
         player?.setMediaItems(items)
-        
-        player?.seekTo(0, 0L)
+
+        val resumePos = loadPlaybackPosition(playlist.tracks.first().uri)
+        player?.seekTo(0, resumePos.coerceAtLeast(0L))
+        applyPlaybackParams()
         player?.prepare()
         player?.playWhenReady = true
         player?.play()
@@ -1703,8 +2047,15 @@ class MainActivity : ComponentActivity() {
         return String.format("%d:%02d", minutes, seconds)
     }
 
+    override fun onPause() {
+        super.onPause()
+        currentTrack?.let { savePlaybackPosition(it.uri, currentPositionMs) }
+    }
+
     override fun onDestroy() {
+        currentTrack?.let { savePlaybackPosition(it.uri, currentPositionMs) }
         super.onDestroy()
+        if (::wifiDirect.isInitialized) wifiDirect.stop()
         controllerFuture?.let { MediaController.releaseFuture(it) }
     }
 }
@@ -1730,13 +2081,14 @@ fun AudioEffectsSettingsSection(
     }
 
     val bandFreqs = listOf("60 Hz", "230 Hz", "910 Hz", "3.6 kHz", "14 kHz")
+    // Android Equalizer uses millibels (−1500..1500). UI shows dB (−15..15).
     val eqBands = remember {
         mutableStateListOf(
-            PlaybackService.bandLevels[0].toFloat(),
-            PlaybackService.bandLevels[1].toFloat(),
-            PlaybackService.bandLevels[2].toFloat(),
-            PlaybackService.bandLevels[3].toFloat(),
-            PlaybackService.bandLevels[4].toFloat()
+            PlaybackService.bandLevels[0].toFloat() / 100f,
+            PlaybackService.bandLevels[1].toFloat() / 100f,
+            PlaybackService.bandLevels[2].toFloat() / 100f,
+            PlaybackService.bandLevels[3].toFloat() / 100f,
+            PlaybackService.bandLevels[4].toFloat() / 100f
         )
     }
 
@@ -1758,7 +2110,7 @@ fun AudioEffectsSettingsSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Enable Equalizer & Effects", 
+                    "Enable All Audio Effects", 
                     color = textColor, 
                     fontSize = 15.sp,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
@@ -1836,7 +2188,7 @@ fun AudioEffectsSettingsSection(
                             onClick = {
                                 for (i in eqBands.indices) {
                                     eqBands[i] = 0f
-                                    PlaybackService.updateBand(i, 0.toShort())
+                                    PlaybackService.updateBand(i, 0.toShort()) // 0 mB = flat
                                 }
                             }
                         ) {
@@ -1856,14 +2208,21 @@ fun AudioEffectsSettingsSection(
                                 modifier = Modifier.width(60.dp)
                             )
                             Slider(
-                                value = level,
+                                value = level.coerceIn(-15f, 15f),
                                 valueRange = -15f..15f,
                                 colors = SliderDefaults.colors(thumbColor = accentColor, activeTrackColor = accentColor, inactiveTrackColor = accentColor.copy(alpha = 0.3f)),
                                 onValueChange = { newLvl ->
                                     eqBands[index] = newLvl
-                                    PlaybackService.updateBand(index, newLvl.toInt().toShort())
+                                    // Convert dB → millibels for Android Equalizer API
+                                    PlaybackService.updateBand(index, (newLvl * 100f).toInt().toShort())
                                 },
                                 modifier = Modifier.weight(1f)
+                            )
+                            Text(
+                                text = "${if (level >= 0) "+" else ""}${level.toInt()} dB",
+                                color = subTextColor,
+                                fontSize = 11.sp,
+                                modifier = Modifier.width(48.dp)
                             )
                         }
                     }
@@ -1875,10 +2234,182 @@ fun AudioEffectsSettingsSection(
 
 
 
+
+/** Load a scannable QR bitmap (public QR API — needs INTERNET). Offline falls back to text. */
+private suspend fun generateQrBitmap(content: String, size: Int): Bitmap? {
+    return withContext(Dispatchers.IO) {
+        try {
+            val encoded = java.net.URLEncoder.encode(content, "UTF-8")
+            val api = "https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=1&data=$encoded"
+            val conn = java.net.URL(api).openConnection() as java.net.HttpURLConnection
+            conn.connectTimeout = 5000
+            conn.readTimeout = 5000
+            conn.doInput = true
+            conn.connect()
+            conn.inputStream.use { BitmapFactory.decodeStream(it) }
+        } catch (e: Exception) {
+            android.util.Log.e("QR", "QR fetch failed", e)
+            try {
+                val bmp = Bitmap.createBitmap(size, size, Bitmap.Config.RGB_565)
+                val c = android.graphics.Canvas(bmp)
+                c.drawColor(android.graphics.Color.WHITE)
+                val p = android.graphics.Paint().apply {
+                    color = android.graphics.Color.BLACK
+                    textSize = 28f
+                    isAntiAlias = true
+                }
+                var y = size / 2f - 40f
+                for (line in content.chunked(22)) {
+                    c.drawText(line, 24f, y, p)
+                    y += 36f
+                }
+                bmp
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+}
+
 data class VideoFolder(
     val name: String,
     val videos: List<VideoItem>
 )
+
+// Simple in-memory caches to stop scroll jank
+private val albumArtCache = android.util.LruCache<String, Bitmap>(64)
+private val videoThumbCache = android.util.LruCache<String, Bitmap>(48)
+
+@Composable
+private fun AsyncAlbumArt(
+    uri: Uri,
+    existing: Bitmap?,
+    accent: Color,
+    sizeDp: Int = 40
+) {
+    val context = LocalContext.current
+    val key = uri.toString()
+    var bitmap by remember(key) {
+        mutableStateOf(existing ?: albumArtCache.get(key))
+    }
+
+    LaunchedEffect(key) {
+        if (bitmap == null) {
+            val loaded = withContext(Dispatchers.IO) {
+                try {
+                    val retriever = MediaMetadataRetriever()
+                    retriever.setDataSource(context, uri)
+                    val bytes = retriever.embeddedPicture
+                    retriever.release()
+                    if (bytes != null) {
+                        // downsample
+                        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
+                        var sample = 1
+                        while (bounds.outWidth / sample > 128 || bounds.outHeight / sample > 128) {
+                            sample *= 2
+                        }
+                        val opts = BitmapFactory.Options().apply {
+                            inSampleSize = sample
+                            inPreferredConfig = Bitmap.Config.RGB_565
+                        }
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, opts)
+                    } else null
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            if (loaded != null) {
+                albumArtCache.put(key, loaded)
+                bitmap = loaded
+            }
+        }
+    }
+
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap!!.asImageBitmap(),
+            contentDescription = null,
+            modifier = Modifier
+                .size(sizeDp.dp)
+                .clip(RoundedCornerShape(6.dp))
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .size(sizeDp.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(accent.copy(alpha = 0.15f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                IconMusicNote,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size((sizeDp / 2).dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun VideoThumbnail(
+    contentUri: Uri,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val key = contentUri.toString()
+    var bitmap by remember(key) { mutableStateOf(videoThumbCache.get(key)) }
+
+    LaunchedEffect(key) {
+        if (bitmap == null) {
+            val frame = withContext(Dispatchers.IO) {
+                try {
+                    val retriever = MediaMetadataRetriever()
+                    retriever.setDataSource(context, contentUri)
+                    // Scaled frame – much cheaper than full-res
+                    val full = retriever.getFrameAtTime(1_000_000)
+                    retriever.release()
+                    if (full != null && (full.width > 320 || full.height > 320)) {
+                        val scale = 320f / maxOf(full.width, full.height)
+                        val w = (full.width * scale).toInt().coerceAtLeast(1)
+                        val h = (full.height * scale).toInt().coerceAtLeast(1)
+                        Bitmap.createScaledBitmap(full, w, h, true).also {
+                            if (it != full) full.recycle()
+                        }
+                    } else full
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            if (frame != null) {
+                videoThumbCache.put(key, frame)
+                bitmap = frame
+            }
+        }
+    }
+
+    Box(
+        modifier = modifier.background(Color.Black.copy(alpha = 0.6f)),
+        contentAlignment = Alignment.Center
+    ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap!!.asImageBitmap(),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Default.PlayArrow,
+                contentDescription = null,
+                tint = Color.White.copy(alpha = 0.5f),
+                modifier = Modifier.size(36.dp)
+            )
+        }
+    }
+}
 
 @Composable
 fun VideoList(
@@ -1887,58 +2418,161 @@ fun VideoList(
     searchQuery: String = "",
     accentColor: Color = Color.Cyan
 ) {
+    var selectedFolder by remember { mutableStateOf<String?>(null) }
+
     val filteredVideos = videoList.filter {
         it.title.contains(searchQuery, ignoreCase = true) ||
         it.path.contains(searchQuery, ignoreCase = true)
     }
-    val videoFolders = filteredVideos.groupBy { 
-        java.io.File(it.path).parentFile?.name ?: "Internal Storage" 
+
+    val videoFolders = filteredVideos.groupBy {
+        java.io.File(it.path).parentFile?.name ?: "Internal Storage"
     }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(2),
-        modifier = Modifier.fillMaxSize().padding(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        videoFolders.forEach { (folderName, videosInFolder) ->
-            item(span = { GridItemSpan(2) }) {
+    if (selectedFolder == null) {
+        // TOP LEVEL – Gallery-style folder cards
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(2),
+            modifier = Modifier.fillMaxSize().padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            videoFolders.forEach { (folderName, videosInFolder) ->
+                val totalMb = videosInFolder.sumOf { it.sizeBytes } / (1024 * 1024)
+                val coverUri = videosInFolder.firstOrNull()?.contentUri
+                item {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .clickable { selectedFolder = folderName },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            if (coverUri != null) {
+                                VideoThumbnail(
+                                    contentUri = coverUri,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+                            // Gradient overlay for text readability
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.Black.copy(alpha = 0.75f)
+                                            )
+                                        )
+                                    )
+                            )
+                            Column(
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(12.dp)
+                            ) {
+                                Text(
+                                    text = folderName,
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = "${videosInFolder.size} items · $totalMb MB",
+                                    color = Color.LightGray,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // INSIDE FOLDER – video grid + back button
+        val folderVideos = videoFolders[selectedFolder] ?: emptyList()
+
+        Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { selectedFolder = null }) {
+                    Text(
+                        "Back",
+                        color = accentColor,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = "📁 $folderName (${videosInFolder.size} items)",
-                    fontSize = 15.sp,
-                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                    color = accentColor,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 4.dp, start = 4.dp)
+                    text = selectedFolder!!,
+                    color = Color.White,
+                    fontSize = 17.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
             }
-            items(videosInFolder) { video ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(110.dp)
-                        .clickable { onVideoSelect(video) },
-                    shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.4f))
-                ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(10.dp),
-                            verticalArrangement = Arrangement.Bottom
-                        ) {
-                            Text(
-                                text = video.title,
-                                color = Color.White,
-                                fontSize = 13.sp,
-                                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                                maxLines = 2
+
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(
+                    items = folderVideos,
+                    key = { it.contentUri.toString() }
+                ) { video ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(140.dp)
+                            .clickable { onVideoSelect(video) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
+                    ) {
+                        Box(modifier = Modifier.fillMaxSize()) {
+                            VideoThumbnail(
+                                contentUri = video.contentUri,
+                                modifier = Modifier.fillMaxSize()
                             )
-                            Text(
-                                text = "${(video.sizeBytes / (1024 * 1024))} MB",
-                                color = Color.LightGray,
-                                fontSize = 10.sp
+                            // Bottom gradient + text
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(
+                                        androidx.compose.ui.graphics.Brush.verticalGradient(
+                                            colors = listOf(
+                                                Color.Transparent,
+                                                Color.Black.copy(alpha = 0.8f)
+                                            )
+                                        )
+                                    )
                             )
+                            Column(
+                                modifier = Modifier
+                                    .align(Alignment.BottomStart)
+                                    .padding(10.dp)
+                            ) {
+                                Text(
+                                    text = video.title,
+                                    color = Color.White,
+                                    fontSize = 12.sp,
+                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                                    maxLines = 2
+                                )
+                                Text(
+                                    text = "${(video.sizeBytes / (1024 * 1024))} MB",
+                                    color = Color.LightGray,
+                                    fontSize = 10.sp
+                                )
+                            }
                         }
                     }
                 }

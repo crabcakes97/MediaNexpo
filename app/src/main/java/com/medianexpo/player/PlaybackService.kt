@@ -24,6 +24,7 @@ class PlaybackService : MediaSessionService() {
     private var bassBoost: BassBoost? = null
     private var virtualizer: Virtualizer? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
+    private var currentSessionId: Int = C.AUDIO_SESSION_ID_UNSET
 
     companion object {
         var instance: PlaybackService? = null
@@ -34,55 +35,128 @@ class PlaybackService : MediaSessionService() {
         var gainMb = 0
         var bassStrength: Short = 500
         var virtualizerStrength: Short = 500
+        // Stored in millibels (−1500..1500 typical)
         val bandLevels = ShortArray(5) { 0 }
 
         fun updateBassBoost(strength: Short) {
-            bassStrength = strength
-            instance?.bassBoost?.setStrength(strength)
+            bassStrength = strength.coerceIn(0, 1000)
+            try {
+                instance?.bassBoost?.setStrength(bassStrength)
+                instance?.bassBoost?.enabled = true
+            } catch (e: Exception) {
+                Log.e("PlaybackService", "BassBoost update failed", e)
+            }
         }
 
         fun updateVirtualizer(strength: Short) {
-            virtualizerStrength = strength
-            instance?.virtualizer?.setStrength(strength)
+            virtualizerStrength = strength.coerceIn(0, 1000)
+            try {
+                instance?.virtualizer?.setStrength(virtualizerStrength)
+                instance?.virtualizer?.enabled = true
+            } catch (e: Exception) {
+                Log.e("PlaybackService", "Virtualizer update failed", e)
+            }
         }
 
         fun updateGain(gain: Int) {
-            gainMb = gain
-            instance?.loudnessEnhancer?.setTargetGain(gain)
+            gainMb = gain.coerceIn(0, 3000)
+            try {
+                instance?.loudnessEnhancer?.setTargetGain(gainMb)
+                instance?.loudnessEnhancer?.enabled = true
+            } catch (e: Exception) {
+                Log.e("PlaybackService", "Gain update failed", e)
+            }
         }
 
         fun updateEqEnabled(enabled: Boolean) {
             eqEnabled = enabled
-            instance?.equalizer?.enabled = enabled
+            try {
+                val svc = instance
+                // Master switch: EQ + bass + virtualizer + pre-amp gain
+                svc?.equalizer?.enabled = enabled
+                svc?.bassBoost?.enabled = enabled
+                svc?.virtualizer?.enabled = enabled
+                svc?.loudnessEnhancer?.enabled = enabled
+                if (enabled) {
+                    svc?.applyAllBands()
+                    try { svc?.bassBoost?.setStrength(bassStrength) } catch (_: Exception) {}
+                    try { svc?.virtualizer?.setStrength(virtualizerStrength) } catch (_: Exception) {}
+                    try { svc?.loudnessEnhancer?.setTargetGain(gainMb) } catch (_: Exception) {}
+                }
+            } catch (e: Exception) {
+                Log.e("PlaybackService", "Effects enable failed", e)
+            }
         }
 
         fun updateBand(band: Int, level: Short) {
+            if (band !in bandLevels.indices) return
             bandLevels[band] = level
-            instance?.equalizer?.setBandLevel(band.toShort(), level)
+            try {
+                val eq = instance?.equalizer ?: return
+                val range = eq.bandLevelRange // [min, max] in mB
+                val clamped = level.coerceIn(range[0], range[1])
+                bandLevels[band] = clamped
+                eq.setBandLevel(band.toShort(), clamped)
+                if (!eq.enabled && eqEnabled) {
+                    eq.enabled = true
+                }
+            } catch (e: Exception) {
+                Log.e("PlaybackService", "Band $band update failed", e)
+            }
+        }
+    }
+
+    private fun applyAllBands() {
+        val eq = equalizer ?: return
+        try {
+            val bands = eq.numberOfBands.toInt()
+            val range = eq.bandLevelRange
+            for (i in 0 until minOf(bands, bandLevels.size)) {
+                val clamped = bandLevels[i].coerceIn(range[0], range[1])
+                eq.setBandLevel(i.toShort(), clamped)
+            }
+            eq.enabled = eqEnabled
+        } catch (e: Exception) {
+            Log.e("PlaybackService", "applyAllBands failed", e)
         }
     }
 
     private fun initAudioEffects(sessionId: Int) {
+        // Skip if already attached to this session — recreating kills live EQ adjustments
+        if (sessionId == currentSessionId && equalizer != null) {
+            applyAllBands()
+            return
+        }
+
         try {
             equalizer?.release()
             bassBoost?.release()
             virtualizer?.release()
             loudnessEnhancer?.release()
 
-            equalizer = Equalizer(0, sessionId).apply {
+            // Priority 0 can lose to system effects; use a modest non-zero priority
+            val priority = 1
+
+            equalizer = Equalizer(priority, sessionId).apply {
                 enabled = eqEnabled
                 val bands = numberOfBands.toInt()
+                val range = bandLevelRange
+                Log.d(
+                    "PlaybackService",
+                    "EQ bands=$bands range=${range[0]}..${range[1]} mB session=$sessionId"
+                )
                 for (i in 0 until minOf(bands, bandLevels.size)) {
-                    setBandLevel(i.toShort(), bandLevels[i])
+                    val clamped = bandLevels[i].coerceIn(range[0], range[1])
+                    setBandLevel(i.toShort(), clamped)
                 }
             }
 
-            bassBoost = BassBoost(0, sessionId).apply {
+            bassBoost = BassBoost(priority, sessionId).apply {
                 enabled = true
                 setStrength(bassStrength)
             }
 
-            virtualizer = Virtualizer(0, sessionId).apply {
+            virtualizer = Virtualizer(priority, sessionId).apply {
                 enabled = true
                 setStrength(virtualizerStrength)
             }
@@ -92,6 +166,7 @@ class PlaybackService : MediaSessionService() {
                 setTargetGain(gainMb)
             }
 
+            currentSessionId = sessionId
             Log.d("PlaybackService", "Audio effects initialized on session $sessionId")
         } catch (e: Exception) {
             Log.e("PlaybackService", "Failed to initialize audio effects", e)
@@ -111,7 +186,11 @@ class PlaybackService : MediaSessionService() {
 
                 setDataCaptureListener(
                     object : Visualizer.OnDataCaptureListener {
-                        override fun onWaveFormDataCapture(visualizer: Visualizer?, waveform: ByteArray?, samplingRate: Int) {
+                        override fun onWaveFormDataCapture(
+                            visualizer: Visualizer?,
+                            waveform: ByteArray?,
+                            samplingRate: Int
+                        ) {
                             if (waveform == null || !player.isPlaying) return
                             val mags = FloatArray(20)
                             val step = (waveform.size / 20).coerceAtLeast(1)
@@ -123,19 +202,25 @@ class PlaybackService : MediaSessionService() {
                             latestFftData = mags
                         }
 
-                        override fun onFftDataCapture(visualizer: Visualizer?, fft: ByteArray?, samplingRate: Int) {
+                        override fun onFftDataCapture(
+                            visualizer: Visualizer?,
+                            fft: ByteArray?,
+                            samplingRate: Int
+                        ) {
                             if (fft == null || !player.isPlaying) return
                             val mags = FloatArray(20)
                             for (i in 0 until 20) {
-                                val real = fft[2 * i].toFloat()
-                                val imag = fft[2 * i + 1].toFloat()
+                                val reIdx = (2 * i).coerceIn(0, fft.size - 1)
+                                val imIdx = (2 * i + 1).coerceIn(0, fft.size - 1)
+                                val real = fft[reIdx].toFloat()
+                                val imag = fft[imIdx].toFloat()
                                 mags[i] = (hypot(real, imag) / 128f).coerceIn(0.05f, 1f)
                             }
                             latestFftData = mags
                         }
                     },
-                    Visualizer.getMaxCaptureRate() / 2,
-                    true,
+                    Visualizer.getMaxCaptureRate() / 2, // release: low CPU
+                    false,
                     true
                 )
                 enabled = true
@@ -167,15 +252,14 @@ class PlaybackService : MediaSessionService() {
                     initVisualizer(audioSessionId)
                 }
             }
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                if (!isPlaying) return
-                val sessionId = player.audioSessionId
-                if (sessionId != C.AUDIO_SESSION_ID_UNSET && sessionId != 0) {
-                    initAudioEffects(sessionId)
-                    initVisualizer(sessionId)
-                }
-            }
         })
+
+        // Attach once if session already exists
+        val sid = player.audioSessionId
+        if (sid != C.AUDIO_SESSION_ID_UNSET && sid != 0) {
+            initAudioEffects(sid)
+            initVisualizer(sid)
+        }
 
         mediaSession = MediaSession.Builder(this, player).build()
     }
@@ -186,6 +270,7 @@ class PlaybackService : MediaSessionService() {
 
     override fun onDestroy() {
         instance = null
+        currentSessionId = C.AUDIO_SESSION_ID_UNSET
         try {
             audioVisualizer?.apply { enabled = false; release() }
             audioVisualizer = null
