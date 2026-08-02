@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.medianexpo.player
 
 import android.Manifest
@@ -24,13 +26,16 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -39,6 +44,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -47,6 +53,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.path
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -69,6 +76,52 @@ import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.math.cos
 import kotlin.math.sin
+
+class SnapshotStateSet<T>(initialElements: Set<T> = emptySet()) : MutableSet<T> {
+    private val delegate = mutableStateOf(initialElements.toMutableSet())
+    override val size: Int get() = delegate.value.size
+    override fun contains(element: T): Boolean = delegate.value.contains(element)
+    override fun containsAll(elements: Collection<T>): Boolean = delegate.value.containsAll(elements)
+    override fun isEmpty(): Boolean = delegate.value.isEmpty()
+    override fun iterator(): MutableIterator<T> = delegate.value.iterator()
+    override fun add(element: T): Boolean {
+        val set = delegate.value.toMutableSet()
+        val added = set.add(element)
+        if (added) delegate.value = set
+        return added
+    }
+    override fun addAll(elements: Collection<T>): Boolean {
+        val set = delegate.value.toMutableSet()
+        val added = set.addAll(elements)
+        if (added) delegate.value = set
+        return added
+    }
+    override fun clear() {
+        delegate.value = mutableSetOf()
+    }
+    override fun remove(element: T): Boolean {
+        val set = delegate.value.toMutableSet()
+        val removed = set.remove(element)
+        if (removed) delegate.value = set
+        return removed
+    }
+    override fun removeAll(elements: Collection<T>): Boolean {
+        val set = delegate.value.toMutableSet()
+        val removed = set.removeAll(elements)
+        if (removed) delegate.value = set
+        return removed
+    }
+    override fun retainAll(elements: Collection<T>): Boolean {
+        val set = delegate.value.toMutableSet()
+        val retained = set.retainAll(elements)
+        if (retained) delegate.value = set
+        return retained
+    }
+}
+
+fun <T> mutableStateSetOf(vararg elements: T): MutableSet<T> {
+    return SnapshotStateSet(mutableSetOf(*elements))
+}
 
 val IconShuffle: ImageVector
     get() = ImageVector.Builder(name = "Shuffle", defaultWidth = 24.dp, defaultHeight = 24.dp, viewportWidth = 24f, viewportHeight = 24f).apply {
@@ -223,14 +276,23 @@ data class Playlist(
 )
 
 enum class VisualizerStyle(val displayName: String) {
-    BARS("Spectrum Bars"),
-    WAVE("Waveform"),
-    PULSE("Pulse Circle"),
-    MIRROR("Mirrored Spectrum"),
-    DOTS("Dot Matrix"),
-    RADAR("Circular Radar"),
+    BARS("Beat Bars"),
+    MIRROR("Mirror Bass"),
+    WAVE("Reactive Wave"),
     RIBBON("Neon Ribbon"),
-    PARTICLES("Particle Ring")
+    PULSE("Kick Pulse"),
+    BEAT_RING("Beat Ring"),
+    EQ_MOUNTAIN("EQ Mountain"),
+    SYNTHWAVE("Synthwave"),
+    STARBURST("Starburst"),
+    TUNNEL("Hyperspace"),
+    LIQUID("Liquid Bass"),
+    VU_METERS("VU Meters"),
+    KALEIDO("Kaleidoscope"),
+    SPARKLINE("Sparkline Grid"),
+    NEON_VORTEX("Neon Vortex"),
+    CYBER_PARTICLES("Cyber Particles"),
+    FREQ_POLYGON("Frequency Polygon")
 }
 
 enum class ThemeModeOption(val displayName: String) {
@@ -249,6 +311,28 @@ enum class AppTheme(
 ) {
     PURPLE("Dark Purple", Color(0xFF121212), Color(0xFF1E1E1E), Color(0xFFF3E8FF), Color(0xFFE9D5FF), Color(0xFFBB86FC)),
     AMOLED("AMOLED Black", Color(0xFF000000), Color(0xFF111111), Color(0xFFF8FAFC), Color(0xFFF1F5F9), Color(0xFF00E676)),
+    AMOLED_BLUE("AMOLED Blue", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFF0F9FF), Color(0xFFE0F2FE), Color(0xFF00B4D8)),
+    AMOLED_RED("AMOLED Red", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFFFF1F2), Color(0xFFFFE4E6), Color(0xFFFF3333)),
+    AMOLED_GOLD("AMOLED Gold", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFFFFBEB), Color(0xFFFEF3C7), Color(0xFFFFD700)),
+    AMOLED_NEON("AMOLED Cyber", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFFAF5FF), Color(0xFFF3E8FF), Color(0xFF00FFCC)),
+    AMOLED_EMERALD("AMOLED Emerald", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFF0FDF4), Color(0xFFDCFCE7), Color(0xFF10B981)),
+    AMOLED_AMBER("AMOLED Amber", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFFFFBEB), Color(0xFFFEF08A), Color(0xFFF59E0B)),
+    AMOLED_TEAL("AMOLED Teal", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFF0FDFA), Color(0xFFCCFBF1), Color(0xFF00ACC1)),
+    AMOLED_MAGENTA("AMOLED Magenta", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFFAF5FF), Color(0xFFE879F9), Color(0xFFE879F9)),
+    AMOLED_LIME("AMOLED Lime", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFF7FEE7), Color(0xFFECFCCB), Color(0xFF84CC16)),
+    AMOLED_ICE("AMOLED Ice", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFF0F9FF), Color(0xFFE0F2FE), Color(0xFF38BDF8)),
+    AMOLED_SUNSET("AMOLED Sunset", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFFFF7ED), Color(0xFFFFEDD5), Color(0xFFFB923C)),
+    AMOLED_LAVENDER("AMOLED Lavender", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFFAF5FF), Color(0xFFF3E8FF), Color(0xFFC084FC)),
+    AMOLED_INDIGO("AMOLED Indigo", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFEEF2FF), Color(0xFFE0E7FF), Color(0xFF6366F1)),
+    AMOLED_ROSE("AMOLED Rose", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFFFF1F2), Color(0xFFFFE4E6), Color(0xFFF43F5E)),
+    AMOLED_CYAN("AMOLED Cyan", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFECFEFF), Color(0xFFCFFAFE), Color(0xFF06B6D4)),
+    AMOLED_VIOLET("AMOLED Violet", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFF5F3FF), Color(0xFFEDE9FE), Color(0xFF8B5CF6)),
+    AMOLED_CORAL("AMOLED Coral", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFFFF7ED), Color(0xFFFFEDD5), Color(0xFFFF7849)),
+    AMOLED_SLATE("AMOLED Slate", Color(0xFF000000), Color(0xFF0A0A0A), Color(0xFFF8FAFC), Color(0xFFF1F5F9), Color(0xFF64748B)),
+    DYNAMIC_AURORA("Dynamic Aurora", Color(0xFF080C14), Color(0xFF101828), Color(0xFFF0FDF4), Color(0xFFDCFCE7), Color(0xFF38BDF8)),
+    ELECTRIC_AMBER("Electric Amber", Color(0xFF110C05), Color(0xFF22180A), Color(0xFFFFFBEB), Color(0xFFFEF08A), Color(0xFFFF9900)),
+    NEON_CYAN("Neon Cyan", Color(0xFF050E12), Color(0xFF0A1D24), Color(0xFFF0FDFA), Color(0xFFCCFBF1), Color(0xFF00E5FF)),
+    MATTE_CHERRY("Matte Cherry", Color(0xFF140709), Color(0xFF240D10), Color(0xFFFFF1F2), Color(0xFFFFE4E6), Color(0xFFFF2A6D)),
     NEON("Cyber Neon", Color(0xFF0D0E15), Color(0xFF1B1D2A), Color(0xFFFFF0F5), Color(0xFFFFE4E1), Color(0xFFFF0055)),
     BLUE("Midnight Blue", Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFFF0F9FF), Color(0xFFE0F2FE), Color(0xFF38BDF8)),
     RED("Crimson Red", Color(0xFF18080A), Color(0xFF280F12), Color(0xFFFFF1F2), Color(0xFFFFE4E6), Color(0xFFFF4D4D)),
@@ -266,7 +350,21 @@ enum class AppTheme(
     LAVA("Lava Orange", Color(0xFF1F0800), Color(0xFF3D1000), Color(0xFFFFF0EC), Color(0xFFFFDCD2), Color(0xFFFF3D00)),
     COFFEE("Coffee Brown", Color(0xFF140D07), Color(0xFF291A0E), Color(0xFFF7F2EE), Color(0xFFEAE0D5), Color(0xFFD4A373)),
     OCEAN("Ocean Depth", Color(0xFF021019), Color(0xFF052033), Color(0xFFE6F4FA), Color(0xFFC3E4F3), Color(0xFF00B4D8)),
-    DRACULA("Dracula Gothic", Color(0xFF181825), Color(0xFF282A36), Color(0xFFF8F8F2), Color(0xFFE2E2DC), Color(0xFFFF79C6))
+    DRACULA("Dracula Gothic", Color(0xFF181825), Color(0xFF282A36), Color(0xFFF8F8F2), Color(0xFFE2E2DC), Color(0xFFFF79C6)),
+    STEEL_GRAY("Steel Gray", Color(0xFF111318), Color(0xFF1F242D), Color(0xFFF1F5F9), Color(0xFFE2E8F0), Color(0xFF94A3B8)),
+    NEON_ORANGE("Neon Orange", Color(0xFF140800), Color(0xFF261200), Color(0xFFFFF7ED), Color(0xFFFFEDD5), Color(0xFFFF6600)),
+    HOT_PINK("Hot Pink", Color(0xFF140710), Color(0xFF290E21), Color(0xFFFDF2F8), Color(0xFFFCE7F3), Color(0xFFFF1493)),
+    ELECTRIC_INDIGO("Electric Indigo", Color(0xFF0A081A), Color(0xFF151033), Color(0xFFEEF2FF), Color(0xFFE0E7FF), Color(0xFF6366F1)),
+    MINT_GREEN("Mint Green", Color(0xFF06150F), Color(0xFF0D291D), Color(0xFFECFDF5), Color(0xFFD1FAE5), Color(0xFF34D399)),
+    COPPER("Copper Glow", Color(0xFF140B07), Color(0xFF29170E), Color(0xFFFFF7ED), Color(0xFFFFEDD5), Color(0xFFD97706)),
+    BRONZE("Bronze Age", Color(0xFF141008), Color(0xFF292012), Color(0xFFFEFCE8), Color(0xFFFEF08A), Color(0xFFCA8A04)),
+    GRAPHITE("Graphite Slate", Color(0xFF0A0A0A), Color(0xFF171717), Color(0xFFFAFAFA), Color(0xFFF5F5F5), Color(0xFFA3A3A3)),
+    NEON_YELLOW("Neon Yellow", Color(0xFF141200), Color(0xFF292400), Color(0xFFFEFCE8), Color(0xFFFEF08A), Color(0xFFCCFF00)),
+    BLOOD_MOON("Blood Moon", Color(0xFF1A0000), Color(0xFF330000), Color(0xFFFFF1F2), Color(0xFFFFE4E6), Color(0xFFDC2626)),
+    DEEP_SAPPHIRE("Deep Sapphire", Color(0xFF020617), Color(0xFF0F172A), Color(0xFFF8FAFC), Color(0xFFF1F5F9), Color(0xFF3B82F6)),
+    RADIOACTIVE("Radioactive Green", Color(0xFF051A05), Color(0xFF0B330B), Color(0xFFF0FDF4), Color(0xFFDCFCE7), Color(0xFF22C55E)),
+    NEON_PURPLE("Neon Purple", Color(0xFF11001A), Color(0xFF240033), Color(0xFFFAF5FF), Color(0xFFF3E8FF), Color(0xFFA855F7)),
+    PLASMA_PINK("Plasma Pink", Color(0xFF1A0014), Color(0xFF330028), Color(0xFFFFF1F2), Color(0xFFFFE4E6), Color(0xFFEC4899))
 }
 
 class MainActivity : ComponentActivity() {
@@ -275,13 +373,14 @@ class MainActivity : ComponentActivity() {
     private val player: Player?
         get() = if (controllerFuture?.isDone == true) controllerFuture?.get() else null
 
-
     private val allTracks = mutableStateListOf<MusicTrack>()
     private val displayTracks = mutableStateListOf<MusicTrack>()
     private val genresList = mutableStateListOf<String>()
     private val artistsList = mutableStateListOf<String>()
     private val playlistsList = mutableStateListOf<Playlist>()
     
+    private val favoriteUris = mutableStateSetOf<String>()
+
     private var isFiltered by mutableStateOf(false)
     private var activeFilterName by mutableStateOf("")
 
@@ -298,24 +397,46 @@ class MainActivity : ComponentActivity() {
     private var showSettingsDialog by mutableStateOf(false)
     private var showNewPlaylistDialog by mutableStateOf(false)
     private var trackToAddToPlaylist by mutableStateOf<MusicTrack?>(null)
+    private var shareTargetUri by mutableStateOf<Uri?>(null)
+    private var shareTargetName by mutableStateOf("")
+    private var selectedPhotoItem by mutableStateOf<PhotoItem?>(null)
+
+    private var showTagEditorDialog by mutableStateOf(false)
+    private var trackToEdit by mutableStateOf<MusicTrack?>(null)
 
     private var currentFolderPath by mutableStateOf("MediaStore (All Storage)")
     private var selectedTab by mutableStateOf(0)
     private val videosList = mutableStateListOf<VideoItem>()
+    private val photosList = mutableStateListOf<PhotoItem>()
     private var currentTheme by mutableStateOf(AppTheme.PURPLE)
+    private var useMaterialYou by mutableStateOf(true)
     private var themeModeOption by mutableStateOf(ThemeModeOption.DARK)
     private var selectedVisualizer by mutableStateOf(VisualizerStyle.BARS)
+    
+    // Playback modifiers
+    private var crossfadeEnabled by mutableStateOf(false)
+    private var edgeLightingEnabled by mutableStateOf(false)
+    private var isSpinningArtEnabled by mutableStateOf(true)
+    private var gaplessPlaybackEnabled by mutableStateOf(true)
 
     private var isSearchOpen by mutableStateOf(false)
     private var searchQuery by mutableStateOf("")
 
-    // Audiobook / Podcast smart resume + speed + pitch
     private var playbackSpeed by mutableStateOf(1.0f)
     private var playbackPitch by mutableStateOf(1.0f)
-    private val speedOptions = listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f)
-    private val pitchOptions = listOf(0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f)
+    private val speedOptions = listOf(0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f)
+    private val pitchOptions = listOf(0.5f, 0.6f, 0.7f, 0.8f, 0.9f, 1.0f, 1.1f, 1.2f, 1.3f, 1.5f, 1.7f, 2.0f)
     private var showSpeedMenu by mutableStateOf(false)
     private var showPitchMenu by mutableStateOf(false)
+
+    private var sleepMinutesLeft by mutableStateOf(0)
+    private var sleepFade by mutableStateOf(true)
+
+    private var loopAMs by mutableStateOf<Long?>(null)
+    private var loopBMs by mutableStateOf<Long?>(null)
+    private var loopEnabled by mutableStateOf(false)
+
+    private val trackBookmarks = mutableStateListOf<Long>()
 
     private lateinit var wifiDirect: WifiDirectShareManager
 
@@ -341,6 +462,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        loadFavorites()
+
         val sessionToken = SessionToken(this, ComponentName(this, PlaybackService::class.java))
         controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
         controllerFuture?.addListener({
@@ -361,17 +484,23 @@ class MainActivity : ComponentActivity() {
             })
         }, MoreExecutors.directExecutor())
 
-        // Restore last used playback speed + pitch
         val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
         playbackSpeed = prefs.getFloat("playback_speed", 1.0f)
         playbackPitch = prefs.getFloat("playback_pitch", 1.0f)
+        useMaterialYou = prefs.getBoolean("use_material_you", true)
+        isSpinningArtEnabled = prefs.getBoolean("spinning_art_enabled", true)
+        gaplessPlaybackEnabled = prefs.getBoolean("gapless_playback_enabled", true)
+        crossfadeEnabled = prefs.getBoolean("crossfade_enabled", false)
+        edgeLightingEnabled = prefs.getBoolean("edge_lighting_enabled", false)
 
         requestAudioPermissions()
         wifiDirect = WifiDirectShareManager(applicationContext)
 
         setContent {
-            // Position/slider only — visualizer polls FFT by itself (no list recomposition).
+            val context = LocalContext.current
             var saveCounter by remember { mutableIntStateOf(0) }
+            var volumeSetByCrossfade by remember { mutableStateOf(false) }
+
             LaunchedEffect(Unit) {
                 while (true) {
                     val p = player
@@ -379,6 +508,30 @@ class MainActivity : ComponentActivity() {
                         isPlayingState = p.isPlaying
                         currentPositionMs = p.currentPosition.coerceAtLeast(0L)
                         totalDurationMs = p.duration.coerceAtLeast(0L)
+
+                        if (crossfadeEnabled && isPlayingState && totalDurationMs > 0 && sleepMinutesLeft <= 0) {
+                            val remaining = totalDurationMs - currentPositionMs
+                            val targetVol = when {
+                                remaining < 4000L -> (remaining / 4000f).coerceIn(0f, 1f)
+                                currentPositionMs < 4000L -> (currentPositionMs / 4000f).coerceIn(0f, 1f)
+                                else -> 1f
+                            }
+                            p.volume = targetVol
+                            volumeSetByCrossfade = true
+                        } else if (volumeSetByCrossfade && sleepMinutesLeft <= 0) {
+                            p.volume = 1f
+                            volumeSetByCrossfade = false
+                        }
+
+                        if (loopEnabled) {
+                            val a = loopAMs
+                            val b = loopBMs
+                            if (a != null && b != null && b > a && currentPositionMs >= b) {
+                                p.seekTo(a)
+                                currentPositionMs = a
+                            }
+                        }
+
                         saveCounter++
                         if (saveCounter >= 20) {
                             saveCounter = 0
@@ -387,12 +540,40 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     }
-                    delay(200) // slider does not need high fps
+                    delay(200)
                 }
             }
 
-            BackHandler(enabled = isFiltered || isSearchOpen) {
-                if (isSearchOpen) {
+            LaunchedEffect(sleepMinutesLeft, isPlayingState) {
+                if (sleepMinutesLeft <= 0) return@LaunchedEffect
+                while (sleepMinutesLeft > 0) {
+                    if (!isPlayingState) {
+                        delay(500)
+                        continue
+                    }
+                    delay(60_000)
+                    if (sleepMinutesLeft <= 0) break
+                    sleepMinutesLeft -= 1
+                    if (sleepMinutesLeft <= 0) {
+                        if (sleepFade) {
+                            var vol = 1f
+                            while (vol > 0.05f) {
+                                vol -= 0.1f
+                                player?.volume = vol.coerceIn(0f, 1f)
+                                delay(200)
+                            }
+                        }
+                        player?.pause()
+                        player?.volume = 1f
+                        sleepMinutesLeft = 0
+                    }
+                }
+            }
+
+            BackHandler(enabled = isFiltered || isSearchOpen || selectedPhotoItem != null) {
+                if (selectedPhotoItem != null) {
+                    selectedPhotoItem = null
+                } else if (isSearchOpen) {
                     isSearchOpen = false
                     searchQuery = ""
                 } else {
@@ -411,923 +592,1136 @@ class MainActivity : ComponentActivity() {
             val textColor = if (isDarkTheme) Color.White else Color.Black
             val subTextColor = if (isDarkTheme) Color.LightGray else Color.DarkGray
 
-            MaterialTheme(colorScheme = if (isDarkTheme) darkColorScheme(background = activeBg) else lightColorScheme(background = activeBg)) {
-                Surface(modifier = Modifier.fillMaxSize(), color = activeBg) {
-                    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text("MediaNexpo", fontSize = 24.sp, color = currentTheme.accent)
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                IconButton(onClick = { isSearchOpen = !isSearchOpen }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Search,
-                                        contentDescription = "Search",
-                                        tint = currentTheme.accent
-                                    )
-                                }
-                                IconButton(onClick = { showSettingsDialog = true }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Settings,
-                                        contentDescription = "Settings",
-                                        tint = currentTheme.accent
-                                    )
-                                }
-                            }
-                        }
+            val dynamicColorScheme = when {
+                useMaterialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+                    if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+                }
+                else -> null
+            }
+            val dynamicAccent = dynamicColorScheme?.primary ?: currentTheme.accent
+            val effectiveAccent = if (useMaterialYou) dynamicAccent else currentTheme.accent
 
-                        if (isSearchOpen) {
-                            Spacer(modifier = Modifier.height(6.dp))
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = { searchQuery = it },
-                                modifier = Modifier.fillMaxWidth(),
-                                placeholder = { Text("Search songs, artists, videos...", color = subTextColor) },
-                                singleLine = true,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = currentTheme.accent,
-                                    unfocusedBorderColor = subTextColor.copy(alpha = 0.5f),
-                                    focusedLabelColor = currentTheme.accent,
-                                    cursorColor = currentTheme.accent
-                                ),
-                                trailingIcon = {
-                                    if (searchQuery.isNotEmpty()) {
-                                        IconButton(onClick = { searchQuery = "" }) {
-                                            Icon(Icons.Default.Clear, contentDescription = "Clear", tint = subTextColor)
-                                        }
-                                    }
-                                }
-                            )
-                        }
+            val appColorScheme = dynamicColorScheme ?: if (isDarkTheme) darkColorScheme(background = activeBg, primary = effectiveAccent) else lightColorScheme(background = activeBg, primary = effectiveAccent)
 
-                        if (isScanning) {
-                            LinearProgressIndicator(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                color = currentTheme.accent
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        if (isFiltered) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+            MaterialTheme(colorScheme = appColorScheme) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = activeBg) {
+                        Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+                            
+                            Surface(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                color = activeCardBg,
+                                shadowElevation = 4.dp
                             ) {
-                                Text("Filter: $activeFilterName", color = currentTheme.accent, fontSize = 13.sp)
-                                TextButton(onClick = { resetFilter() }) {
-                                    Text("Show All Songs ✕", color = Color.Gray, fontSize = 12.sp)
-                                }
-                            }
-                        }
-
-                        val tabs = listOf("Songs", "Artists", "Genres", "Playlists", "Videos", "About")
-
-                        androidx.compose.foundation.lazy.LazyRow(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(tabs.size) { index ->
-                                val isSelected = selectedTab == index
-                                val chipBg = if (isSelected) currentTheme.accent else activeCardBg
-                                val chipTextColor = if (isSelected) Color.Black else textColor
-
-                                androidx.compose.material3.Surface(
-                                    onClick = { selectedTab = index },
-                                    shape = RoundedCornerShape(20.dp),
-                                    color = chipBg,
-                                    border = androidx.compose.foundation.BorderStroke(
-                                        1.dp,
-                                        if (isSelected) Color.Black else subTextColor.copy(alpha = 0.25f)
-                                    ),
-                                    shadowElevation = if (isSelected) 2.dp else 0.dp
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 18.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Text(
-                                        text = tabs[index],
-                                        color = chipTextColor,
-                                        fontSize = 13.sp,
-                                        fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium,
-                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        val filteredTracks = if (searchQuery.isBlank()) {
-                            displayTracks
-                        } else {
-                            displayTracks.filter { 
-                                it.title.contains(searchQuery, ignoreCase = true) || 
-                                it.artist.contains(searchQuery, ignoreCase = true) ||
-                                it.genre.contains(searchQuery, ignoreCase = true)
-                            }
-                        }
-
-                        val filteredArtists = if (searchQuery.isBlank()) {
-                            artistsList
-                        } else {
-                            artistsList.filter { it.contains(searchQuery, ignoreCase = true) }
-                        }
-
-                        val filteredGenres = if (searchQuery.isBlank()) {
-                            genresList
-                        } else {
-                            genresList.filter { it.contains(searchQuery, ignoreCase = true) }
-                        }
-
-                        val filteredVideos = if (searchQuery.isBlank()) {
-                            videosList
-                        } else {
-                            videosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
-                        }
-
-                        Box(modifier = Modifier.weight(1f)) {
-                            when (selectedTab) {
-                                0 -> TrackList(
-                                    tracks = if (searchQuery.isBlank()) filteredTracks else filteredTracks.filter { it.title.contains(searchQuery, ignoreCase = true) || it.artist.contains(searchQuery, ignoreCase = true) },
-                                    cardBg = activeCardBg,
-                                    textColor = textColor,
-                                    subTextColor = subTextColor,
-                                    onTrackSelect = { playTrack(it) },
-                                    onTrackLongClick = { trackToAddToPlaylist = it }
-                                )
-                                1 -> ArtistList(
-                                    artists = filteredArtists,
-                                    theme = currentTheme,
-                                    cardBg = activeCardBg,
-                                    textColor = textColor,
-                                    onArtistClick = { artistName ->
-                                        displayTracks.clear()
-                                        displayTracks.addAll(allTracks.filter { it.artist.equals(artistName, ignoreCase = true) })
-                                        isFiltered = true
-                                        activeFilterName = "Artist: $artistName"
-                                        selectedTab = 0
-                                    }
-                                )
-                                2 -> GenreList(
-                                    genres = filteredGenres,
-                                    theme = currentTheme,
-                                    cardBg = activeCardBg,
-                                    textColor = textColor,
-                                    onGenreClick = { genreName ->
-                                        displayTracks.clear()
-                                        displayTracks.addAll(allTracks.filter { it.genre.equals(genreName, ignoreCase = true) })
-                                        isFiltered = true
-                                        activeFilterName = "Genre: $genreName"
-                                        selectedTab = 0
-                                    }
-                                )
-                                3 -> PlaylistView(
-                                    playlists = playlistsList,
-                                    theme = currentTheme,
-                                    cardBg = activeCardBg,
-                                    textColor = textColor,
-                                    onCreateNew = { showNewPlaylistDialog = true },
-                                    onPlayPlaylist = { playlist ->
-                                        if (playlist.tracks.isNotEmpty()) {
-                                            playPlaylist(playlist)
-                                        }
-                                    }
-                                )
-                                4 -> VideoList(
-                                    videoList = filteredVideos,
-                                    onVideoSelect = { video ->
-                                        player?.pause()
-                                        val intent = Intent(this@MainActivity, VideoPlayerActivity::class.java).apply {
-                                            putExtra("EXTRA_VIDEO_URI", video.contentUri.toString())
-                                        }
-                                        startActivity(intent)
-                                    },
-                                    searchQuery = searchQuery,
-                                    accentColor = currentTheme.accent
-                                )
-                                5 -> AboutView(currentTheme, activeCardBg, textColor)
-                            }
-                        }
-
-                        currentTrack?.let { track ->
-                            Card(
-                                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black),
-                                colors = CardDefaults.cardColors(containerColor = activeCardBg)
-                            ) {
-                                Column(modifier = Modifier.padding(12.dp)) {
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(
-                                            text = if (isPlayerMinimized) "Now Playing (Minimized)" else "Now Playing",
-                                            color = currentTheme.accent,
-                                            fontSize = 12.sp
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(10.dp)
+                                                .clip(RoundedCornerShape(5.dp))
+                                                .background(effectiveAccent)
                                         )
-                                        IconButton(
-                                            onClick = { isPlayerMinimized = !isPlayerMinimized },
-                                            modifier = Modifier.size(28.dp)
-                                        ) {
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text("MediaNexpo", fontSize = 20.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = effectiveAccent)
+                                    }
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        IconButton(onClick = { isSearchOpen = !isSearchOpen }) {
                                             Icon(
-                                                imageVector = if (isPlayerMinimized) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                                                contentDescription = "Minimize",
-                                                tint = textColor
+                                                imageVector = Icons.Default.Search,
+                                                contentDescription = "Search",
+                                                tint = effectiveAccent
                                             )
                                         }
-                                    }
-
-                                    if (!isPlayerMinimized) {
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        MusicVisualizerView(
-                                            isPlaying = isPlayingState,
-                                            style = selectedVisualizer,
-                                            accentColor = currentTheme.accent
-                                        )
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                    }
-
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        AsyncAlbumArt(
-                                            uri = track.uri,
-                                            existing = track.artwork,
-                                            accent = currentTheme.accent,
-                                            sizeDp = if (isPlayerMinimized) 36 else 52
-                                        )
-
-                                        Spacer(modifier = Modifier.width(12.dp))
-
-                                        Column(modifier = Modifier.weight(1f)) {
-                                            Text(track.title, color = textColor, fontSize = if (isPlayerMinimized) 14.sp else 16.sp, maxLines = 1)
-                                            Text("${track.artist} • ${track.genre}", color = subTextColor, fontSize = 11.sp, maxLines = 1)
-                                        }
-
-                                        if (isPlayerMinimized) {
-                                            IconButton(
-                                                onClick = { player?.let { if (it.isPlaying) it.pause() else it.play() } }
-                                            ) {
-                                                Icon(
-                                                    imageVector = if (isPlayingState) IconPause else IconPlayArrow,
-                                                    contentDescription = "Play/Pause",
-                                                    tint = currentTheme.accent
-                                                )
-                                            }
-                                        }
-                                    }
-
-                                    if (!isPlayerMinimized) {
-                                        Spacer(modifier = Modifier.height(8.dp))
-
-                                        val sliderPosition = if (totalDurationMs > 0) currentPositionMs.toFloat() / totalDurationMs else 0f
-                                        Slider(
-                                            value = sliderPosition,
-                                            onValueChange = { percent ->
-                                                if (totalDurationMs > 0) {
-                                                    val seekTarget = (percent * totalDurationMs).toLong()
-                                                    player?.seekTo(seekTarget)
-                                                    currentPositionMs = seekTarget
-                                                }
-                                            },
-                                            colors = SliderDefaults.colors(
-                                                thumbColor = currentTheme.accent,
-                                                activeTrackColor = currentTheme.accent
+                                        IconButton(onClick = { showSettingsDialog = true }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Settings,
+                                                contentDescription = "Settings",
+                                                tint = effectiveAccent
                                             )
-                                        )
-
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text(formatTime(currentPositionMs), color = subTextColor, fontSize = 11.sp)
-                                            val remainingMs = (totalDurationMs - currentPositionMs).coerceAtLeast(0L)
-                                            Text("-${formatTime(remainingMs)}", color = subTextColor, fontSize = 11.sp)
-                                        }
-
-                                        Spacer(modifier = Modifier.height(4.dp))
-
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            IconButton(onClick = { toggleShuffle() }) {
-                                                Icon(IconShuffle, contentDescription = "Shuffle", tint = if (isShuffleEnabled) currentTheme.accent else subTextColor)
-                                            }
-                                            IconButton(onClick = { player?.let { if (it.hasPreviousMediaItem()) it.seekToPrevious() } }) {
-                                                Icon(IconSkipPrevious, contentDescription = "Previous", tint = textColor)
-                                            }
-                                            Button(
-                                                onClick = {
-                                                    player?.let {
-                                                        if (it.isPlaying) {
-                                                            currentTrack?.let { t -> savePlaybackPosition(t.uri, currentPositionMs) }
-                                                            it.pause()
-                                                        } else {
-                                                            it.play()
-                                                        }
-                                                    }
-                                                },
-                                                colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
-                                            ) {
-                                                Icon(imageVector = if (isPlayingState) IconPause else IconPlayArrow, contentDescription = "Play/Pause", tint = Color.Black)
-                                            }
-                                            IconButton(onClick = { player?.let { if (it.hasNextMediaItem()) it.seekToNext() } }) {
-                                                Icon(IconSkipNext, contentDescription = "Next", tint = textColor)
-                                            }
-                                            IconButton(onClick = { cycleRepeatMode() }) {
-                                                Icon(IconRepeat, contentDescription = "Repeat", tint = if (repeatModeState != Player.REPEAT_MODE_OFF) currentTheme.accent else subTextColor)
-                                            }
-                                        }
-
-                                        // Speed + Pitch controls
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.Center,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Text("Speed", color = subTextColor, fontSize = 12.sp)
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Box {
-                                                OutlinedButton(
-                                                    onClick = { showSpeedMenu = true },
-                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                                    border = androidx.compose.foundation.BorderStroke(1.dp, currentTheme.accent.copy(alpha = 0.5f))
-                                                ) {
-                                                    Text(
-                                                        text = if (playbackSpeed == 1.0f) "1x" else "${playbackSpeed}x",
-                                                        color = currentTheme.accent,
-                                                        fontSize = 13.sp,
-                                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                                    )
-                                                }
-                                                DropdownMenu(
-                                                    expanded = showSpeedMenu,
-                                                    onDismissRequest = { showSpeedMenu = false },
-                                                    modifier = Modifier.background(activeCardBg)
-                                                ) {
-                                                    speedOptions.forEach { speed ->
-                                                        DropdownMenuItem(
-                                                            text = {
-                                                                Text(
-                                                                    text = if (speed == 1.0f) "1x (Normal)" else "${speed}x",
-                                                                    color = if (playbackSpeed == speed) currentTheme.accent else textColor,
-                                                                    fontSize = 14.sp
-                                                                )
-                                                            },
-                                                            onClick = {
-                                                                setSpeed(speed)
-                                                                showSpeedMenu = false
-                                                            }
-                                                        )
-                                                    }
-                                                }
-                                            }
-
-                                            Spacer(modifier = Modifier.width(14.dp))
-                                            Text("Pitch", color = subTextColor, fontSize = 12.sp)
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Box {
-                                                OutlinedButton(
-                                                    onClick = { showPitchMenu = true },
-                                                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp),
-                                                    border = androidx.compose.foundation.BorderStroke(1.dp, currentTheme.accent.copy(alpha = 0.5f))
-                                                ) {
-                                                    Text(
-                                                        text = if (playbackPitch == 1.0f) "1x" else "${playbackPitch}x",
-                                                        color = currentTheme.accent,
-                                                        fontSize = 13.sp,
-                                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                                    )
-                                                }
-                                                DropdownMenu(
-                                                    expanded = showPitchMenu,
-                                                    onDismissRequest = { showPitchMenu = false },
-                                                    modifier = Modifier.background(activeCardBg)
-                                                ) {
-                                                    pitchOptions.forEach { pitch ->
-                                                        DropdownMenuItem(
-                                                            text = {
-                                                                Text(
-                                                                    text = if (pitch == 1.0f) "1x (Normal)" else "${pitch}x",
-                                                                    color = if (playbackPitch == pitch) currentTheme.accent else textColor,
-                                                                    fontSize = 14.sp
-                                                                )
-                                                            },
-                                                            onClick = {
-                                                                setPitch(pitch)
-                                                                showPitchMenu = false
-                                                            }
-                                                        )
-                                                    }
-                                                }
-                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                    }
 
-                    if (showNewPlaylistDialog) {
-                        var newPlaylistName by remember { mutableStateOf("") }
-                        AlertDialog(
-                            onDismissRequest = { showNewPlaylistDialog = false },
-                            title = { Text("Create New Playlist", color = textColor) },
-                            text = {
+                            if (isSearchOpen) {
+                                Spacer(modifier = Modifier.height(6.dp))
                                 OutlinedTextField(
-                                    value = newPlaylistName,
-                                    onValueChange = { newPlaylistName = it },
-                                    label = { Text("Playlist Name", color = subTextColor) },
+                                    value = searchQuery,
+                                    onValueChange = { searchQuery = it },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    placeholder = { Text("Search songs, artists, videos, favorites...", color = subTextColor) },
                                     singleLine = true,
                                     colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = currentTheme.accent,
-                                        unfocusedBorderColor = subTextColor,
-                                        focusedLabelColor = currentTheme.accent,
-                                        cursorColor = currentTheme.accent
-                                    )
-                                )
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        if (newPlaylistName.isNotBlank()) {
-                                            playlistsList.add(Playlist(name = newPlaylistName.trim()))
-                                            showNewPlaylistDialog = false
-                                        }
-                                    },
-                                    colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
-                                ) {
-                                    Text("Create", color = Color.Black)
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showNewPlaylistDialog = false }) {
-                                    Text("Cancel", color = subTextColor)
-                                }
-                            },
-                            containerColor = activeCardBg
-                        )
-                    }
-
-                    trackToAddToPlaylist?.let { track ->
-                        AlertDialog(
-                            onDismissRequest = { trackToAddToPlaylist = null },
-                            title = { Text("Add to Playlist", color = textColor) },
-                            text = {
-                                if (playlistsList.isEmpty()) {
-                                    Text("No playlists created yet.", color = subTextColor)
-                                } else {
-                                    LazyColumn {
-                                        items(playlistsList) { playlist ->
-                                            Card(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .padding(vertical = 4.dp)
-                                                    .clickable {
-                                                        if (!playlist.tracks.contains(track)) {
-                                                            playlist.tracks.add(track)
-                                                        }
-                                                        trackToAddToPlaylist = null
-                                                    },
-                                                colors = CardDefaults.cardColors(containerColor = activeCardBg)
-                                            ) {
-                                                Row(
-                                                    modifier = Modifier.padding(12.dp),
-                                                    verticalAlignment = Alignment.CenterVertically
-                                                ) {
-                                                    Icon(IconMusicNote, contentDescription = null, tint = currentTheme.accent)
-                                                    Spacer(modifier = Modifier.width(12.dp))
-                                                    Text(playlist.name, color = textColor, fontSize = 14.sp)
-                                                }
+                                        focusedBorderColor = effectiveAccent,
+                                        unfocusedBorderColor = subTextColor.copy(alpha = 0.5f),
+                                        focusedLabelColor = effectiveAccent,
+                                        cursorColor = effectiveAccent
+                                    ),
+                                    trailingIcon = {
+                                        if (searchQuery.isNotEmpty()) {
+                                            IconButton(onClick = { searchQuery = "" }) {
+                                                Icon(Icons.Default.Clear, contentDescription = "Clear", tint = subTextColor)
                                             }
                                         }
                                     }
+                                )
+                            }
+
+                            if (isScanning) {
+                                LinearProgressIndicator(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                    color = effectiveAccent
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            if (isFiltered) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Filter: $activeFilterName", color = effectiveAccent, fontSize = 13.sp)
+                                    TextButton(onClick = { resetFilter() }) {
+                                        Text("Show All Songs ✕", color = Color.Gray, fontSize = 12.sp)
+                                    }
                                 }
-                            },
-                            confirmButton = {
-                                Row {
+                            }
+
+                            val tabs = listOf("Songs", "Artists", "Genres", "Playlists", "Videos", "Photos", "Favorites", "About")
+                            val pagerState = rememberPagerState(pageCount = { tabs.size })
+                            val coroutineScope = rememberCoroutineScope()
+
+                            LaunchedEffect(pagerState.currentPage) {
+                                selectedTab = pagerState.currentPage
+                            }
+
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 4.dp, vertical = 2.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                color = activeCardBg,
+                                shadowElevation = 2.dp
+                            ) {
+                                androidx.compose.foundation.lazy.LazyRow(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    items(tabs.size) { index ->
+                                        val isSelected = selectedTab == index
+                                        val chipBg = if (isSelected) effectiveAccent else Color.Transparent
+                                        val chipTextColor = if (isSelected) Color.Black else textColor
+
+                                        androidx.compose.material3.Surface(
+                                            onClick = { 
+                                                selectedTab = index
+                                                coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                                            },
+                                            shape = RoundedCornerShape(12.dp),
+                                            color = chipBg,
+                                            shadowElevation = if (isSelected) 2.dp else 0.dp
+                                        ) {
+                                            Text(
+                                                text = tabs[index],
+                                                color = chipTextColor,
+                                                fontSize = 13.sp,
+                                                fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium,
+                                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(6.dp))
+
+                            val filteredTracks = if (searchQuery.isBlank()) {
+                                displayTracks
+                            } else {
+                                displayTracks.filter { 
+                                    it.title.contains(searchQuery, ignoreCase = true) || 
+                                    it.artist.contains(searchQuery, ignoreCase = true) ||
+                                    it.genre.contains(searchQuery, ignoreCase = true)
+                                }
+                            }
+
+                            val filteredArtists = if (searchQuery.isBlank()) {
+                                artistsList
+                            } else {
+                                artistsList.filter { it.contains(searchQuery, ignoreCase = true) }
+                            }
+
+                            val filteredGenres = if (searchQuery.isBlank()) {
+                                genresList
+                            } else {
+                                genresList.filter { it.contains(searchQuery, ignoreCase = true) }
+                            }
+
+                            val filteredVideos = if (searchQuery.isBlank()) {
+                                videosList
+                            } else {
+                                videosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
+                            }
+
+                            val filteredPhotos = if (searchQuery.isBlank()) {
+                                photosList
+                            } else {
+                                photosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
+                            }
+
+                            HorizontalPager(
+                                state = pagerState,
+                                beyondBoundsPageCount = 3,
+                                modifier = Modifier.weight(1f)
+                            ) { page ->
+                                when (page) {
+                                    0 -> TrackList(
+                                        tracks = filteredTracks,
+                                        cardBg = activeCardBg,
+                                        textColor = textColor,
+                                        subTextColor = subTextColor,
+                                        accentColor = effectiveAccent,
+                                        currentTrack = currentTrack,
+                                        favoriteUris = favoriteUris,
+                                        onTrackSelect = { playTrack(it) },
+                                        onTrackLongClick = { trackToAddToPlaylist = it },
+                                        onToggleFavorite = { toggleFavorite(it.uri) },
+                                        onEditTrack = { track ->
+                                            trackToEdit = track
+                                            showTagEditorDialog = true
+                                        }
+                                    )
+                                    1 -> ArtistList(
+                                        artists = filteredArtists,
+                                        themeAccent = effectiveAccent,
+                                        cardBg = activeCardBg,
+                                        textColor = textColor,
+                                        onArtistClick = { artistName ->
+                                            displayTracks.clear()
+                                            displayTracks.addAll(allTracks.filter { it.artist.equals(artistName, ignoreCase = true) })
+                                            isFiltered = true
+                                            activeFilterName = "Artist: $artistName"
+                                            selectedTab = 0
+                                            coroutineScope.launch { pagerState.animateScrollToPage(0) }
+                                        }
+                                    )
+                                    2 -> GenreList(
+                                        genres = filteredGenres,
+                                        themeAccent = effectiveAccent,
+                                        cardBg = activeCardBg,
+                                        textColor = textColor,
+                                        onGenreClick = { genreName ->
+                                            displayTracks.clear()
+                                            displayTracks.addAll(allTracks.filter { it.genre.equals(genreName, ignoreCase = true) })
+                                            isFiltered = true
+                                            activeFilterName = "Genre: $genreName"
+                                            selectedTab = 0
+                                            coroutineScope.launch { pagerState.animateScrollToPage(0) }
+                                        }
+                                    )
+                                    3 -> PlaylistView(
+                                        playlists = playlistsList,
+                                        themeAccent = effectiveAccent,
+                                        cardBg = activeCardBg,
+                                        textColor = textColor,
+                                        onCreateNew = { showNewPlaylistDialog = true },
+                                        onPlayPlaylist = { playlist ->
+                                            if (playlist.tracks.isNotEmpty()) {
+                                                playPlaylist(playlist)
+                                            }
+                                        }
+                                    )
+                                    4 -> VideoList(
+                                        videoList = filteredVideos,
+                                        favoriteUris = favoriteUris,
+                                        onVideoSelect = { video ->
+                                            player?.pause()
+                                            val intent = Intent(this@MainActivity, VideoPlayerActivity::class.java).apply {
+                                                putExtra("EXTRA_VIDEO_URI", video.contentUri.toString())
+                                            }
+                                            startActivity(intent)
+                                        },
+                                        onVideoLongClick = { video ->
+                                            shareTargetUri = video.contentUri
+                                            shareTargetName = video.title
+                                        },
+                                        onToggleFavorite = { toggleFavorite(it.contentUri) },
+                                        searchQuery = searchQuery,
+                                        accentColor = effectiveAccent
+                                    )
+                                    5 -> PhotoList(
+                                        photoList = filteredPhotos,
+                                        favoriteUris = favoriteUris,
+                                        onPhotoSelect = { photo -> selectedPhotoItem = photo },
+                                        onPhotoLongClick = { photo ->
+                                            shareTargetUri = photo.contentUri
+                                            shareTargetName = photo.title
+                                        },
+                                        onToggleFavorite = { toggleFavorite(it.contentUri) },
+                                        searchQuery = searchQuery,
+                                        accentColor = effectiveAccent
+                                    )
+                                    6 -> FavoritesView(
+                                        allTracks = allTracks,
+                                        videosList = videosList,
+                                        photosList = photosList,
+                                        favoriteUris = favoriteUris,
+                                        cardBg = activeCardBg,
+                                        textColor = textColor,
+                                        subTextColor = subTextColor,
+                                        accentColor = effectiveAccent,
+                                        onTrackSelect = { playTrack(it) },
+                                        onVideoSelect = { video ->
+                                            player?.pause()
+                                            val intent = Intent(this@MainActivity, VideoPlayerActivity::class.java).apply {
+                                                putExtra("EXTRA_VIDEO_URI", video.contentUri.toString())
+                                            }
+                                            startActivity(intent)
+                                        },
+                                        onPhotoSelect = { selectedPhotoItem = it },
+                                        onToggleFavorite = { toggleFavorite(it) }
+                                    )
+                                    7 -> AboutView(themeAccent = effectiveAccent, cardBg = activeCardBg, textColor = textColor)
+                                }
+                            }
+
+                            CurrentPlayerSection(
+                                currentTrack = currentTrack,
+                                isPlayingState = isPlayingState,
+                                isPlayerMinimized = isPlayerMinimized,
+                                onToggleMinimize = { isPlayerMinimized = !isPlayerMinimized },
+                                currentPositionMs = currentPositionMs,
+                                totalDurationMs = totalDurationMs,
+                                activeCardBg = activeCardBg,
+                                textColor = textColor,
+                                subTextColor = subTextColor,
+                                accentColor = effectiveAccent,
+                                selectedVisualizer = selectedVisualizer,
+                                isSpinningArtEnabled = isSpinningArtEnabled,
+                                onToggleSpinningArt = { enabled ->
+                                    isSpinningArtEnabled = enabled
+                                    getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("spinning_art_enabled", enabled).apply()
+                                },
+                                gaplessPlaybackEnabled = gaplessPlaybackEnabled,
+                                onToggleGapless = { enabled ->
+                                    gaplessPlaybackEnabled = enabled
+                                    getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("gapless_playback_enabled", enabled).apply()
+                                },
+                                isShuffleEnabled = isShuffleEnabled,
+                                repeatModeState = repeatModeState,
+                                playbackSpeed = playbackSpeed,
+                                playbackPitch = playbackPitch,
+                                speedOptions = speedOptions,
+                                pitchOptions = pitchOptions,
+                                showSpeedMenu = showSpeedMenu,
+                                onShowSpeedMenuChange = { showSpeedMenu = it },
+                                showPitchMenu = showPitchMenu,
+                                onShowPitchMenuChange = { showPitchMenu = it },
+                                sleepMinutesLeft = sleepMinutesLeft,
+                                loopEnabled = loopEnabled,
+                                loopAMs = loopAMs,
+                                loopBMs = loopBMs,
+                                trackBookmarks = trackBookmarks,
+                                onSeek = { seekTarget ->
+                                    player?.seekTo(seekTarget)
+                                    currentPositionMs = seekTarget
+                                },
+                                onPlayPause = {
+                                    player?.let {
+                                        if (it.isPlaying) {
+                                            currentTrack?.let { t -> savePlaybackPosition(t.uri, currentPositionMs) }
+                                            it.pause()
+                                        } else {
+                                            it.play()
+                                        }
+                                    }
+                                },
+                                onPrevious = { player?.let { if (it.hasPreviousMediaItem()) it.seekToPrevious() } },
+                                onNext = { player?.let { if (it.hasNextMediaItem()) it.seekToNext() } },
+                                onToggleShuffle = { toggleShuffle() },
+                                onCycleRepeat = { cycleRepeatMode() },
+                                onSetSpeed = { setSpeed(it) },
+                                onSetPitch = { setPitch(it) },
+                                onSetSleep = { sleepMinutesLeft = it },
+                                onSetLoop = { a, b, enabled ->
+                                    loopAMs = a
+                                    loopBMs = b
+                                    loopEnabled = enabled
+                                },
+                                onClearBookmarks = { trackBookmarks.clear() },
+                                onAddBookmark = { mark ->
+                                    if (trackBookmarks.none { kotlin.math.abs(it - mark) < 1500 }) {
+                                        trackBookmarks.add(mark)
+                                        trackBookmarks.sort()
+                                    }
+                                }
+                            )
+                        }
+
+                        selectedPhotoItem?.let { photo ->
+                            FullscreenImageView(
+                                uri = photo.contentUri,
+                                title = photo.title,
+                                accentColor = effectiveAccent,
+                                isFavorite = favoriteUris.contains(photo.contentUri.toString()),
+                                onDismiss = { selectedPhotoItem = null },
+                                onShare = {
+                                    shareTargetUri = photo.contentUri
+                                    shareTargetName = photo.title
+                                },
+                                onToggleFavorite = { toggleFavorite(photo.contentUri) }
+                            )
+                        }
+
+                        if (showTagEditorDialog && trackToEdit != null) {
+                            var editTitle by remember { mutableStateOf(trackToEdit!!.title) }
+                            var editArtist by remember { mutableStateOf(trackToEdit!!.artist) }
+                            var editGenre by remember { mutableStateOf(trackToEdit!!.genre) }
+
+                            AlertDialog(
+                                onDismissRequest = { showTagEditorDialog = false },
+                                title = { Text("Edit Song Metadata", color = textColor) },
+                                text = {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        OutlinedTextField(
+                                            value = editTitle,
+                                            onValueChange = { editTitle = it },
+                                            label = { Text("Title", color = subTextColor) },
+                                            singleLine = true,
+                                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = effectiveAccent, unfocusedBorderColor = subTextColor, focusedLabelColor = effectiveAccent, cursorColor = effectiveAccent)
+                                        )
+                                        OutlinedTextField(
+                                            value = editArtist,
+                                            onValueChange = { editArtist = it },
+                                            label = { Text("Artist", color = subTextColor) },
+                                            singleLine = true,
+                                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = effectiveAccent, unfocusedBorderColor = subTextColor, focusedLabelColor = effectiveAccent, cursorColor = effectiveAccent)
+                                        )
+                                        OutlinedTextField(
+                                            value = editGenre,
+                                            onValueChange = { editGenre = it },
+                                            label = { Text("Genre", color = subTextColor) },
+                                            singleLine = true,
+                                            colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = effectiveAccent, unfocusedBorderColor = subTextColor, focusedLabelColor = effectiveAccent, cursorColor = effectiveAccent)
+                                        )
+                                    }
+                                },
+                                confirmButton = {
                                     Button(
                                         onClick = {
-                                            // Prefer Wi‑Fi Direct when active; else LAN HTTP share
-                                            if (wifiDirect.isActive) {
-                                                try {
-                                                    val cache = java.io.File(cacheDir, "wifi_direct_out").apply { mkdirs() }
-                                                    val name = track.name.ifBlank { track.title }
-                                                        .replace(Regex("[^a-zA-Z0-9._-]"), "_")
-                                                    val out = java.io.File(cache, name)
-                                                    contentResolver.openInputStream(track.uri)?.use { input ->
-                                                        java.io.FileOutputStream(out).use { output -> input.copyTo(output) }
-                                                    }
-                                                    wifiDirect.queueSend(out, name)
-                                                    trackToAddToPlaylist = null
-                                                    showSettingsDialog = true
-                                                } catch (e: Exception) {
-                                                    android.util.Log.e("Share", "Wi‑Fi Direct send prepare failed", e)
-                                                }
-                                            } else {
-                                                LocalShareService.start(
-                                                    this@MainActivity,
-                                                    shareUri = track.uri,
-                                                    shareName = track.name.ifBlank { track.title }
-                                                )
-                                                trackToAddToPlaylist = null
-                                                showSettingsDialog = true
+                                            val idx = allTracks.indexOf(trackToEdit)
+                                            if (idx >= 0) {
+                                                val updated = trackToEdit!!.copy(title = editTitle, artist = editArtist, genre = editGenre)
+                                                allTracks[idx] = updated
+                                                val dispIdx = displayTracks.indexOf(trackToEdit)
+                                                if (dispIdx >= 0) displayTracks[dispIdx] = updated
+                                                if (currentTrack == trackToEdit) currentTrack = updated
+                                                saveLibraryToCache(allTracks)
+                                            }
+                                            showTagEditorDialog = false
+                                            trackToEdit = null
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text("Save", color = Color.Black)
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showTagEditorDialog = false; trackToEdit = null }) {
+                                        Text("Cancel", color = subTextColor)
+                                    }
+                                },
+                                containerColor = activeCardBg
+                            )
+                        }
+
+                        if (showNewPlaylistDialog) {
+                            var newPlaylistName by remember { mutableStateOf("") }
+                            AlertDialog(
+                                onDismissRequest = { showNewPlaylistDialog = false },
+                                title = { Text("Create New Playlist", color = textColor) },
+                                text = {
+                                    OutlinedTextField(
+                                        value = newPlaylistName,
+                                        onValueChange = { newPlaylistName = it },
+                                        label = { Text("Playlist Name", color = subTextColor) },
+                                        singleLine = true,
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedBorderColor = effectiveAccent,
+                                            unfocusedBorderColor = subTextColor,
+                                            focusedLabelColor = effectiveAccent,
+                                            cursorColor = effectiveAccent
+                                        )
+                                    )
+                                },
+                                confirmButton = {
+                                    Button(
+                                        onClick = {
+                                            if (newPlaylistName.isNotBlank()) {
+                                                playlistsList.add(Playlist(name = newPlaylistName.trim()))
+                                                showNewPlaylistDialog = false
                                             }
                                         },
-                                        colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
+                                        colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                        shape = RoundedCornerShape(12.dp)
                                     ) {
-                                        Text(
-                                            if (wifiDirect.isActive) "Share Direct" else "Share Wi‑Fi",
-                                            color = Color.Black
-                                        )
+                                        Text("Create", color = Color.Black)
                                     }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Button(
-                                        onClick = { showNewPlaylistDialog = true },
-                                        colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
-                                    ) {
-                                        Text("New Playlist", color = Color.Black)
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showNewPlaylistDialog = false }) {
+                                        Text("Cancel", color = subTextColor)
                                     }
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { trackToAddToPlaylist = null }) {
-                                    Text("Cancel", color = subTextColor)
-                                }
-                            },
-                            containerColor = activeCardBg
-                        )
-                    }
+                                },
+                                containerColor = activeCardBg
+                            )
+                        }
 
-                    if (showSettingsDialog) {
-                        AlertDialog(
-                            onDismissRequest = { showSettingsDialog = false },
-                            title = { Text("Settings & Themes", color = textColor) },
-                            text = {
-                                LazyColumn {
-                                    item {
+                        shareTargetUri?.let { uri ->
+                            AlertDialog(
+                                onDismissRequest = { shareTargetUri = null },
+                                title = { Text("Share", color = textColor) },
+                                text = {
+                                    Column {
+                                        Text(shareTargetName, color = textColor, fontSize = 15.sp)
+                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Text("LAN: same Wi‑Fi · Direct: peer-to-peer", color = subTextColor, fontSize = 12.sp)
+                                    }
+                                },
+                                confirmButton = {
+                                    Row {
                                         Button(
                                             onClick = {
-                                                showSettingsDialog = false
-                                                val savedUriStr = getSharedPreferences("prefs", MODE_PRIVATE).getString("folder_uri", null)
-                                                val uri = savedUriStr?.let { Uri.parse(it) }
-                                                startDeepLibraryScan(uri)
-                                            },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
-                                        ) {
-                                            Text("Rescan Media Library", color = Color.Black)
-                                        }
-
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text("Theme Mode:", color = subTextColor, fontSize = 14.sp)
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                        ) {
-                                            ThemeModeOption.values().forEach { mode ->
-                                                val isSelected = themeModeOption == mode
-                                                Button(
-                                                    onClick = { themeModeOption = mode },
-                                                    modifier = Modifier.weight(1f),
-                                                    colors = ButtonDefaults.buttonColors(
-                                                        containerColor = if (isSelected) currentTheme.accent else activeCardBg,
-                                                        contentColor = if (isSelected) Color.Black else textColor
-                                                    ),
-                                                    border = androidx.compose.foundation.BorderStroke(
-                                                        1.dp,
-                                                        if (isSelected) Color.Transparent else subTextColor.copy(alpha = 0.3f)
-                                                    )
-                                                ) {
-                                                    Text(
-                                                        text = mode.displayName,
-                                                        fontSize = 10.sp,
-                                                        color = if (isSelected) Color.Black else textColor,
-                                                        maxLines = 1
-                                                    )
-                                                }
-                                            }
-                                        }
-
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("Visualizer Style:", color = subTextColor, fontSize = 14.sp)
-                                        Spacer(modifier = Modifier.height(4.dp))
-
-                                        var visExpanded by remember { mutableStateOf(false) }
-                                        Box(modifier = Modifier.fillMaxWidth()) {
-                                            OutlinedButton(
-                                                onClick = { visExpanded = true },
-                                                modifier = Modifier.fillMaxWidth(),
-                                                colors = ButtonDefaults.buttonColors(containerColor = activeCardBg)
-                                            ) {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                                    modifier = Modifier.fillMaxWidth()
-                                                ) {
-                                                    Text("Visualizer: ${selectedVisualizer.displayName}", color = currentTheme.accent, fontSize = 13.sp)
-                                                    Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = currentTheme.accent)
-                                                }
-                                            }
-                                            DropdownMenu(
-                                                expanded = visExpanded,
-                                                onDismissRequest = { visExpanded = false },
-                                                modifier = Modifier.background(activeCardBg)
-                                            ) {
-                                                VisualizerStyle.values().forEach { style ->
-                                                    DropdownMenuItem(
-                                                        text = {
-                                                            Text(
-                                                                text = style.displayName,
-                                                                color = if (selectedVisualizer == style) currentTheme.accent else textColor,
-                                                                fontSize = 13.sp
-                                                            )
-                                                        },
-                                                        onClick = {
-                                                            selectedVisualizer = style
-                                                            visExpanded = false
+                                                if (wifiDirect.isActive) {
+                                                    try {
+                                                        val cache = java.io.File(cacheDir, "wifi_direct_out").apply { mkdirs() }
+                                                        val name = shareTargetName.replace(Regex("[^a-zA-Z0-9._-]"), "_").ifBlank { "shared" }
+                                                        val out = java.io.File(cache, name)
+                                                        contentResolver.openInputStream(uri)?.use { input ->
+                                                            java.io.FileOutputStream(out).use { output -> input.copyTo(output) }
                                                         }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    item {
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text("Color Theme Palette (${AppTheme.values().size} Themes):", color = subTextColor, fontSize = 14.sp)
-                                        Spacer(modifier = Modifier.height(4.dp))
-
-                                        var themeExpanded by remember { mutableStateOf(false) }
-                                        Box(modifier = Modifier.fillMaxWidth()) {
-                                            OutlinedButton(
-                                                onClick = { themeExpanded = true },
-                                                modifier = Modifier.fillMaxWidth(),
-                                                colors = ButtonDefaults.buttonColors(containerColor = activeCardBg)
-                                            ) {
-                                                Row(
-                                                    verticalAlignment = Alignment.CenterVertically,
-                                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                                    modifier = Modifier.fillMaxWidth()
-                                                ) {
-                                                    Text("Theme: ${currentTheme.displayName}", color = currentTheme.accent, fontSize = 13.sp)
-                                                    Box(
-                                                        modifier = Modifier
-                                                            .size(16.dp)
-                                                            .clip(androidx.compose.foundation.shape.CircleShape)
-                                                            .background(currentTheme.accent)
-                                                    )
-                                                }
-                                            }
-                                            DropdownMenu(
-                                                expanded = themeExpanded,
-                                                onDismissRequest = { themeExpanded = false },
-                                                modifier = Modifier
-                                                    .background(activeCardBg)
-                                                    .heightIn(max = 300.dp)
-                                            ) {
-                                                AppTheme.values().forEach { theme ->
-                                                    DropdownMenuItem(
-                                                        text = {
-                                                            Row(
-                                                                verticalAlignment = Alignment.CenterVertically,
-                                                                horizontalArrangement = Arrangement.SpaceBetween,
-                                                                modifier = Modifier.fillMaxWidth()
-                                                            ) {
-                                                                Text(
-                                                                    text = theme.displayName,
-                                                                    color = if (currentTheme == theme) theme.accent else textColor,
-                                                                    fontSize = 13.sp
-                                                                )
-                                                                Spacer(modifier = Modifier.width(16.dp))
-                                                                Box(
-                                                                    modifier = Modifier
-                                                                        .size(14.dp)
-                                                                        .clip(androidx.compose.foundation.shape.CircleShape)
-                                                                        .background(theme.accent)
-                                                                )
-                                                            }
-                                                        },
-                                                        onClick = {
-                                                            currentTheme = theme
-                                                            themeExpanded = false
-                                                        }
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-
-                                    item {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text("Storage Directory:", color = subTextColor, fontSize = 14.sp)
-                                        Text(currentFolderPath, color = textColor, fontSize = 12.sp)
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Button(
-                                            onClick = {
-                                                showSettingsDialog = false
-                                                folderPicker.launch(null)
-                                            },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
-                                        ) {
-                                            Text("Select Custom Music Folder", color = Color.Black)
-                                        }
-                                    }
-                                    item {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text("Local Wi‑Fi Sharing:", color = subTextColor, fontSize = 14.sp)
-                                        Spacer(modifier = Modifier.height(4.dp))
-
-                                        var shareRunning by remember {
-                                            mutableStateOf(LocalShareService.isRunning)
-                                        }
-                                        var shareUrl by remember {
-                                            mutableStateOf(LocalShareService.localUrl)
-                                        }
-                                        var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
-
-                                        // Keep URL/QR in sync after service starts
-                                        LaunchedEffect(shareRunning) {
-                                            if (shareRunning) {
-                                                for (i in 0 until 20) {
-                                                    val url = LocalShareService.localUrl
-                                                    if (url.isNotBlank() && !url.contains("0.0.0.0")) {
-                                                        shareUrl = url
-                                                        break
+                                                        wifiDirect.queueSend(out, name)
+                                                        shareTargetUri = null
+                                                        showSettingsDialog = true
+                                                    } catch (e: Exception) {
+                                                        Log.e("Share", "Direct prepare failed", e)
                                                     }
-                                                    delay(100)
-                                                }
-                                                shareUrl = LocalShareService.localUrl
-                                                if (shareUrl.isNotBlank()) {
-                                                    qrBitmap = generateQrBitmap(shareUrl, 512)
-                                                }
-                                            } else {
-                                                qrBitmap = null
-                                                shareUrl = ""
-                                            }
-                                        }
-
-                                        Button(
-                                            onClick = {
-                                                if (shareRunning) {
-                                                    LocalShareService.stop(this@MainActivity)
-                                                    shareRunning = false
                                                 } else {
-                                                    LocalShareService.start(this@MainActivity)
-                                                    shareRunning = true
-                                                    shareUrl = LocalShareService.localUrl
+                                                    LocalShareService.start(this@MainActivity, shareUri = uri, shareName = shareTargetName)
+                                                    shareTargetUri = null
+                                                    showSettingsDialog = true
                                                 }
                                             },
-                                            modifier = Modifier.fillMaxWidth(),
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = if (shareRunning) Color(0xFFB00020) else currentTheme.accent
-                                            )
+                                            colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                            shape = RoundedCornerShape(12.dp)
                                         ) {
-                                            Text(
-                                                if (shareRunning) "Stop Receive Mode" else "Start Receive Mode",
-                                                color = Color.Black
-                                            )
+                                            Text(if (wifiDirect.isActive) "Share Direct" else "Share LAN", color = Color.Black)
                                         }
-
-                                        if (shareRunning) {
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Text(
-                                                "Others on your Wi‑Fi can open:",
-                                                color = subTextColor,
-                                                fontSize = 12.sp
-                                            )
-                                            Text(
-                                                text = shareUrl.ifBlank { "Starting server…" },
-                                                color = currentTheme.accent,
-                                                fontSize = 14.sp,
-                                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
-                                            )
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .background(Color.White, RoundedCornerShape(12.dp))
-                                                    .padding(16.dp),
-                                                contentAlignment = Alignment.Center
-                                            ) {
-                                                if (qrBitmap != null) {
-                                                    Image(
-                                                        bitmap = qrBitmap!!.asImageBitmap(),
-                                                        contentDescription = "QR code",
-                                                        modifier = Modifier.size(200.dp)
-                                                    )
-                                                } else {
-                                                    Text(
-                                                        "Generating QR…",
-                                                        color = Color.Gray,
-                                                        fontSize = 12.sp
-                                                    )
-                                                }
-                                            }
-                                            Spacer(modifier = Modifier.height(6.dp))
-                                            Text(
-                                                "Scan this QR on another phone (same Wi‑Fi), or type the URL.",
-                                                color = subTextColor,
-                                                fontSize = 11.sp
-                                            )
-                                            if (LocalShareService.lastReceivedName != null) {
-                                                Text(
-                                                    "Last received: ${LocalShareService.lastReceivedName}",
-                                                    color = currentTheme.accent,
-                                                    fontSize = 12.sp
-                                                )
-                                            }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        TextButton(onClick = { shareTargetUri = null }) {
+                                            Text("Cancel", color = textColor)
                                         }
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            "Send a song: long-press a track → Share on Wi‑Fi",
-                                            color = subTextColor,
-                                            fontSize = 11.sp
-                                        )
                                     }
-                                    item {
-                                        Spacer(modifier = Modifier.height(12.dp))
-                                        Text("Wi‑Fi Direct (no router):", color = subTextColor, fontSize = 14.sp)
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(wifiDirect.status, color = currentTheme.accent, fontSize = 12.sp)
-                                        Spacer(modifier = Modifier.height(6.dp))
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                            Button(
-                                                onClick = {
-                                                    if (wifiDirect.isActive) wifiDirect.stop()
-                                                    else wifiDirect.start()
-                                                },
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = if (wifiDirect.isActive) Color(0xFFB00020) else currentTheme.accent
-                                                )
-                                            ) {
-                                                Text(
-                                                    if (wifiDirect.isActive) "Stop Direct" else "Start Direct",
-                                                    color = Color.Black
-                                                )
-                                            }
-                                            if (wifiDirect.isActive) {
-                                                Button(
-                                                    onClick = { wifiDirect.discover() },
-                                                    colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
-                                                ) {
-                                                    Text("Scan", color = Color.Black)
-                                                }
-                                            }
-                                        }
-                                        if (wifiDirect.peers.isNotEmpty()) {
-                                            Spacer(modifier = Modifier.height(8.dp))
-                                            Text("Tap a device to connect:", color = subTextColor, fontSize = 12.sp)
-                                            wifiDirect.peers.forEach { device ->
+                                },
+                                dismissButton = {},
+                                containerColor = activeCardBg
+                            )
+                        }
+
+                        trackToAddToPlaylist?.let { track ->
+                            AlertDialog(
+                                onDismissRequest = { trackToAddToPlaylist = null },
+                                title = { Text("Add to Playlist", color = textColor) },
+                                text = {
+                                    if (playlistsList.isEmpty()) {
+                                        Text("No playlists created yet.", color = subTextColor)
+                                    } else {
+                                        LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 200.dp)) {
+                                            items(playlistsList) { playlist ->
                                                 Card(
                                                     modifier = Modifier
                                                         .fillMaxWidth()
-                                                        .padding(vertical = 3.dp)
-                                                        .clickable { wifiDirect.connect(device) },
-                                                    colors = CardDefaults.cardColors(containerColor = activeCardBg)
+                                                        .padding(vertical = 4.dp)
+                                                        .clickable {
+                                                            if (!playlist.tracks.contains(track)) {
+                                                                playlist.tracks.add(track)
+                                                            }
+                                                            trackToAddToPlaylist = null
+                                                        },
+                                                    colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                    shape = RoundedCornerShape(12.dp)
                                                 ) {
-                                                    Column(Modifier.padding(10.dp)) {
-                                                        Text(device.deviceName.ifBlank { "Unknown device" }, color = textColor, fontSize = 13.sp)
-                                                        Text(device.deviceAddress, color = subTextColor, fontSize = 10.sp)
+                                                    Row(
+                                                        modifier = Modifier.padding(12.dp),
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Icon(IconMusicNote, contentDescription = null, tint = effectiveAccent)
+                                                        Spacer(modifier = Modifier.width(12.dp))
+                                                        Text(playlist.name, color = textColor, fontSize = 14.sp)
                                                     }
                                                 }
                                             }
                                         }
-                                        Spacer(modifier = Modifier.height(4.dp))
-                                        Text(
-                                            "Both phones: Start Direct → Scan → connect. Then long-press a track → Share Wi‑Fi Direct.",
-                                            color = subTextColor,
-                                            fontSize = 11.sp
-                                        )
                                     }
-                                    item {
-                                        AudioEffectsSettingsSection(textColor = textColor, subTextColor = subTextColor, cardBg = activeCardBg, accentColor = currentTheme.accent)
+                                },
+                                confirmButton = {
+                                    Row {
+                                        Button(
+                                            onClick = {
+                                                if (wifiDirect.isActive) {
+                                                    try {
+                                                        val cache = java.io.File(cacheDir, "wifi_direct_out").apply { mkdirs() }
+                                                        val name = track.name.ifBlank { track.title }.replace(Regex("[^a-zA-Z0-9._-]"), "_")
+                                                        val out = java.io.File(cache, name)
+                                                        contentResolver.openInputStream(track.uri)?.use { input ->
+                                                            java.io.FileOutputStream(out).use { output -> input.copyTo(output) }
+                                                        }
+                                                        wifiDirect.queueSend(out, name)
+                                                        trackToAddToPlaylist = null
+                                                        showSettingsDialog = true
+                                                    } catch (e: Exception) {
+                                                        android.util.Log.e("Share", "Wi‑Fi Direct send prepare failed", e)
+                                                    }
+                                                } else {
+                                                    LocalShareService.start(
+                                                        this@MainActivity,
+                                                        shareUri = track.uri,
+                                                        shareName = track.name.ifBlank { track.title }
+                                                    )
+                                                    trackToAddToPlaylist = null
+                                                    showSettingsDialog = true
+                                                }
+                                            },
+                                            colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text(if (wifiDirect.isActive) "Share Direct" else "Share Wi‑Fi", color = Color.Black)
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Button(
+                                            onClick = { showNewPlaylistDialog = true },
+                                            colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                            shape = RoundedCornerShape(12.dp)
+                                        ) {
+                                            Text("New Playlist", color = Color.Black)
+                                        }
                                     }
-                                }
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = { showSettingsDialog = false },
-                                    colors = ButtonDefaults.buttonColors(containerColor = currentTheme.accent)
-                                ) {
-                                    Text("Close", color = Color.Black)
-                                }
-                            },
-                            containerColor = activeCardBg
-                        )
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { trackToAddToPlaylist = null }) {
+                                        Text("Cancel", color = subTextColor)
+                                    }
+                                },
+                                containerColor = activeCardBg
+                            )
+                        }
+
+                        if (showSettingsDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showSettingsDialog = false },
+                                title = { Text("Settings & Themes", color = textColor) },
+                                text = {
+                                    LazyColumn(modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
+                                        item {
+                                            Button(
+                                                onClick = {
+                                                    showSettingsDialog = false
+                                                    val savedUriStr = getSharedPreferences("prefs", MODE_PRIVATE).getString("folder_uri", null)
+                                                    val uri = savedUriStr?.let { Uri.parse(it) }
+                                                    startDeepLibraryScan(uri)
+                                                },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text("Rescan Media Library", color = Color.Black)
+                                            }
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Material You (Wallpaper Colors)", color = textColor, fontSize = 14.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Extract theme colors from system wallpaper", color = subTextColor, fontSize = 11.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = useMaterialYou,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = { 
+                                                            useMaterialYou = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("use_material_you", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Text("Theme Mode:", color = subTextColor, fontSize = 14.sp)
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                            ) {
+                                                ThemeModeOption.values().forEach { mode ->
+                                                    val isSelected = themeModeOption == mode
+                                                    Button(
+                                                        onClick = { themeModeOption = mode },
+                                                        modifier = Modifier.weight(1f),
+                                                        colors = ButtonDefaults.buttonColors(
+                                                            containerColor = if (isSelected) effectiveAccent else activeCardBg,
+                                                            contentColor = if (isSelected) Color.Black else textColor
+                                                        ),
+                                                        shape = RoundedCornerShape(8.dp)
+                                                    ) {
+                                                        Text(
+                                                            text = mode.displayName,
+                                                            fontSize = 10.sp,
+                                                            color = if (isSelected) Color.Black else textColor,
+                                                            maxLines = 1
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text("Visualizer Style:", color = subTextColor, fontSize = 14.sp)
+                                            Spacer(modifier = Modifier.height(4.dp))
+
+                                            var visExpanded by remember { mutableStateOf(false) }
+                                            Box(modifier = Modifier.fillMaxWidth()) {
+                                                OutlinedButton(
+                                                    onClick = { visExpanded = true },
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                ) {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically,
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Text("Visualizer: ${selectedVisualizer.displayName}", color = effectiveAccent, fontSize = 13.sp)
+                                                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = effectiveAccent)
+                                                    }
+                                                }
+                                                DropdownMenu(
+                                                    expanded = visExpanded,
+                                                    onDismissRequest = { visExpanded = false },
+                                                    modifier = Modifier.background(activeCardBg).heightIn(max = 280.dp)
+                                                ) {
+                                                    VisualizerStyle.values().forEach { style ->
+                                                        DropdownMenuItem(
+                                                            text = {
+                                                                Text(
+                                                                    text = style.displayName,
+                                                                    color = if (selectedVisualizer == style) effectiveAccent else textColor,
+                                                                    fontSize = 13.sp
+                                                                )
+                                                            },
+                                                            onClick = {
+                                                                selectedVisualizer = style
+                                                                visExpanded = false
+                                                            }
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        if (!useMaterialYou) {
+                                            item {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text("Accent Color Palette (55 Themes):", color = subTextColor, fontSize = 14.sp)
+                                                Spacer(modifier = Modifier.height(4.dp))
+
+                                                var themeExpanded by remember { mutableStateOf(false) }
+                                                Box(modifier = Modifier.fillMaxWidth()) {
+                                                    OutlinedButton(
+                                                        onClick = { themeExpanded = true },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        shape = RoundedCornerShape(12.dp)
+                                                    ) {
+                                                        Row(
+                                                            verticalAlignment = Alignment.CenterVertically,
+                                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                                            modifier = Modifier.fillMaxWidth()
+                                                        ) {
+                                                            Text("Palette: ${currentTheme.displayName}", color = effectiveAccent, fontSize = 13.sp)
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .size(16.dp)
+                                                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                                                    .background(currentTheme.accent)
+                                                            ) {}
+                                                        }
+                                                    }
+                                                    DropdownMenu(
+                                                        expanded = themeExpanded,
+                                                        onDismissRequest = { themeExpanded = false },
+                                                        modifier = Modifier.background(activeCardBg).heightIn(max = 280.dp)
+                                                    ) {
+                                                        AppTheme.values().forEach { theme ->
+                                                            DropdownMenuItem(
+                                                                text = {
+                                                                    Row(
+                                                                        verticalAlignment = Alignment.CenterVertically,
+                                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                                        modifier = Modifier.fillMaxWidth()
+                                                                    ) {
+                                                                        Text(
+                                                                            text = theme.displayName,
+                                                                            color = if (currentTheme == theme) theme.accent else textColor,
+                                                                            fontSize = 13.sp
+                                                                        )
+                                                                        Spacer(modifier = Modifier.width(16.dp))
+                                                                        Box(
+                                                                            modifier = Modifier
+                                                                                .size(14.dp)
+                                                                                .clip(androidx.compose.foundation.shape.CircleShape)
+                                                                                .background(theme.accent)
+                                                                        ) {}
+                                                                    }
+                                                                },
+                                                                onClick = {
+                                                                    currentTheme = theme
+                                                                    themeExpanded = false
+                                                                }
+                                                            )
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        item {
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Text("Playback & Timers", color = textColor, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                            Spacer(modifier = Modifier.height(4.dp))
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Smooth Fade Transitions", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Fade volume in/out at the start and end of songs", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = crossfadeEnabled,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = { 
+                                                            crossfadeEnabled = it 
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("crossfade_enabled", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Column(modifier = Modifier.padding(12.dp)) {
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text("Sleep Timer", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        val sleepOpts = listOf(0, 5, 15, 30, 45, 60, 90)
+                                                        var showSleepMenuLocal by remember { mutableStateOf(false) }
+                                                        Box {
+                                                            OutlinedButton(
+                                                                onClick = { showSleepMenuLocal = true },
+                                                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                                                                shape = RoundedCornerShape(8.dp)
+                                                            ) {
+                                                                Text(if (sleepMinutesLeft > 0) "$sleepMinutesLeft min" else "Off", color = effectiveAccent, fontSize = 12.sp)
+                                                            }
+                                                            DropdownMenu(expanded = showSleepMenuLocal, onDismissRequest = { showSleepMenuLocal = false }) {
+                                                                sleepOpts.forEach { m ->
+                                                                    DropdownMenuItem(
+                                                                        text = { Text(if (m == 0) "Off" else "$m minutes") },
+                                                                        onClick = { sleepMinutesLeft = m; showSleepMenuLocal = false }
+                                                                    )
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text("Fade out when sleep timer ends", color = subTextColor, fontSize = 12.sp)
+                                                        Switch(
+                                                            checked = sleepFade,
+                                                            colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                            onCheckedChange = { sleepFade = it }
+                                                        )
+                                                    }
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Text("Cool Extras", color = textColor, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                            Spacer(modifier = Modifier.height(4.dp))
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Neon Edge Lighting (Party Mode)", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Screen borders glow and throb to the bass", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = edgeLightingEnabled,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = { 
+                                                            edgeLightingEnabled = it 
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("edge_lighting_enabled", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        item {
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Text("Storage Directory:", color = subTextColor, fontSize = 14.sp)
+                                            Text(currentFolderPath, color = textColor, fontSize = 12.sp)
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Button(
+                                                onClick = {
+                                                    showSettingsDialog = false
+                                                    folderPicker.launch(null)
+                                                },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text("Select Custom Music Folder", color = Color.Black)
+                                            }
+                                        }
+                                        item {
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Text("Local Wi‑Fi Sharing:", color = subTextColor, fontSize = 14.sp)
+                                            Spacer(modifier = Modifier.height(4.dp))
+
+                                            var shareRunning by remember { mutableStateOf(LocalShareService.isRunning) }
+                                            var shareUrl by remember { mutableStateOf(LocalShareService.localUrl) }
+                                            var qrBitmap by remember { mutableStateOf<Bitmap?>(null) }
+
+                                            LaunchedEffect(shareRunning) {
+                                                if (shareRunning) {
+                                                    for (i in 0 until 20) {
+                                                        val url = LocalShareService.localUrl
+                                                        if (url.isNotBlank() && !url.contains("0.0.0.0")) {
+                                                            shareUrl = url
+                                                            break
+                                                        }
+                                                        delay(100)
+                                                    }
+                                                    shareUrl = LocalShareService.localUrl
+                                                    if (shareUrl.isNotBlank()) {
+                                                        qrBitmap = generateQrBitmap(shareUrl, 512)
+                                                    }
+                                                } else {
+                                                    qrBitmap = null
+                                                    shareUrl = ""
+                                                }
+                                            }
+
+                                            Button(
+                                                onClick = {
+                                                    if (shareRunning) {
+                                                        LocalShareService.stop(this@MainActivity)
+                                                        shareRunning = false
+                                                    } else {
+                                                        LocalShareService.start(this@MainActivity)
+                                                        shareRunning = true
+                                                        shareUrl = LocalShareService.localUrl
+                                                    }
+                                                },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = if (shareRunning) Color(0xFFB00020) else effectiveAccent
+                                                ),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text(if (shareRunning) "Stop Receive Mode" else "Start Receive Mode", color = Color.Black)
+                                            }
+
+                                            if (shareRunning) {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text("Others on your Wi‑Fi can open:", color = subTextColor, fontSize = 12.sp)
+                                                Text(
+                                                    text = shareUrl.ifBlank { "Starting server…" },
+                                                    color = effectiveAccent,
+                                                    fontSize = 14.sp,
+                                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                                                )
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .background(Color.White, RoundedCornerShape(12.dp))
+                                                        .padding(16.dp),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    if (qrBitmap != null) {
+                                                        Image(
+                                                            bitmap = qrBitmap!!.asImageBitmap(),
+                                                            contentDescription = "QR code",
+                                                            modifier = Modifier.size(200.dp)
+                                                        )
+                                                    } else {
+                                                        Text("Generating QR…", color = Color.Gray, fontSize = 12.sp)
+                                                    }
+                                                }
+                                                Spacer(modifier = Modifier.height(6.dp))
+                                                Text("Scan this QR on another phone (same Wi‑Fi), or type the URL.", color = subTextColor, fontSize = 11.sp)
+                                                if (LocalShareService.lastReceivedName != null) {
+                                                    Text("Last received: ${LocalShareService.lastReceivedName}", color = effectiveAccent, fontSize = 12.sp)
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text("Send a song: long-press a track → Share on Wi‑Fi", color = subTextColor, fontSize = 11.sp)
+                                        }
+                                        item {
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Text("Wi‑Fi Direct (no router):", color = subTextColor, fontSize = 14.sp)
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text(wifiDirect.status, color = effectiveAccent, fontSize = 12.sp)
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                Button(
+                                                    onClick = {
+                                                        if (wifiDirect.isActive) wifiDirect.stop()
+                                                        else wifiDirect.start()
+                                                    },
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = if (wifiDirect.isActive) Color(0xFFB00020) else effectiveAccent
+                                                    ),
+                                                    shape = RoundedCornerShape(12.dp)
+                                                ) {
+                                                    Text(if (wifiDirect.isActive) "Stop Direct" else "Start Direct", color = Color.Black)
+                                                }
+                                                if (wifiDirect.isActive) {
+                                                    Button(
+                                                        onClick = { wifiDirect.discover() },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                                        shape = RoundedCornerShape(12.dp)
+                                                    ) {
+                                                        Text("Scan", color = Color.Black)
+                                                    }
+                                                }
+                                            }
+                                            if (wifiDirect.peers.isNotEmpty()) {
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                Text("Tap a device to connect:", color = subTextColor, fontSize = 12.sp)
+                                                wifiDirect.peers.forEach { device ->
+                                                    Card(
+                                                        modifier = Modifier
+                                                            .fillMaxWidth()
+                                                            .padding(vertical = 3.dp)
+                                                            .clickable { wifiDirect.connect(device) },
+                                                        colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                        shape = RoundedCornerShape(12.dp)
+                                                    ) {
+                                                        Column(Modifier.padding(10.dp)) {
+                                                            Text(device.deviceName.ifBlank { "Unknown device" }, color = textColor, fontSize = 13.sp)
+                                                            Text(device.deviceAddress, color = subTextColor, fontSize = 10.sp)
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Text("Both phones: Start Direct → Scan → connect. Then long-press a track → Share Wi‑Fi Direct.", color = subTextColor, fontSize = 11.sp)
+                                        }
+                                        item {
+                                            AudioEffectsSettingsSection(textColor = textColor, subTextColor = subTextColor, cardBg = activeCardBg, accentColor = effectiveAccent)
+                                        }
+                                    }
+                                },
+                                confirmButton = {
+                                    Button(
+                                        onClick = { showSettingsDialog = false },
+                                        colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text("Close", color = Color.Black)
+                                    }
+                                },
+                                containerColor = activeCardBg
+                            )
+                        }
+                    }
+
+                    if (edgeLightingEnabled && isPlayingState) {
+                        MainActivityInstanceHelper.EdgeLightingView(accentColor = effectiveAccent)
                     }
                 }
             }
         }
+    }
+
+    private fun loadFavorites() {
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        val set = prefs.getStringSet("favorite_uris", emptySet()) ?: emptySet()
+        favoriteUris.clear()
+        favoriteUris.addAll(set)
+    }
+
+    private fun saveFavorites() {
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        prefs.edit().putStringSet("favorite_uris", favoriteUris.toSet()).apply()
+    }
+
+    private fun toggleFavorite(uri: Uri) {
+        val str = uri.toString()
+        if (favoriteUris.contains(str)) {
+            favoriteUris.remove(str)
+        } else {
+            favoriteUris.add(str)
+        }
+        saveFavorites()
     }
 
     private fun resetFilter() {
@@ -1342,12 +1736,12 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.READ_MEDIA_AUDIO)
             permissions.add(Manifest.permission.READ_MEDIA_VIDEO)
+            permissions.add(Manifest.permission.READ_MEDIA_IMAGES)
             permissions.add(Manifest.permission.POST_NOTIFICATIONS)
         } else {
             permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE)
         }
         permissions.add(Manifest.permission.RECORD_AUDIO)
-        // Wi‑Fi Direct
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissions.add(Manifest.permission.NEARBY_WIFI_DEVICES)
         } else {
@@ -1427,6 +1821,9 @@ class MainActivity : ComponentActivity() {
                 val scannedVideos = VideoRepository.scanLocalVideos(this@MainActivity)
                 videosList.clear()
                 videosList.addAll(scannedVideos)
+                val scannedPhotos = PhotoRepository.scanLocalPhotos(this@MainActivity)
+                photosList.clear()
+                photosList.addAll(scannedPhotos)
                 true
             } else false
         } catch (e: Exception) {
@@ -1435,142 +1832,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Composable
-    private fun MusicVisualizerView(
-        isPlaying: Boolean,
-        style: VisualizerStyle,
-        accentColor: Color
-    ) {
-        // Display values (smoothed) — animate toward targets every frame
-        val display = remember { FloatArray(24) { 0.08f } }
-        var frameTick by remember { mutableIntStateOf(0) }
-
-        LaunchedEffect(isPlaying) {
-            if (!isPlaying) {
-                for (i in display.indices) display[i] = 0.08f
-                frameTick++
-                return@LaunchedEffect
-            }
-            // Drive at display refresh — smooth lerp, not stepped FFT snaps
-            while (true) {
-                withFrameNanos {
-                    val latest = PlaybackService.latestFftData
-                    val n = minOf(display.size, if (latest.isNotEmpty()) latest.size else 0)
-                    if (n > 0) {
-                        for (i in 0 until n) {
-                            val target = latest[i].coerceIn(0.05f, 1f)
-                            // Fast attack, slower decay — looks lively
-                            val speed = if (target > display[i]) 0.55f else 0.28f
-                            display[i] += (target - display[i]) * speed
-                        }
-                    } else {
-                        for (i in display.indices) {
-                            display[i] += (0.08f - display[i]) * 0.2f
-                        }
-                    }
-                    frameTick++
-                }
-            }
-        }
-
-        // Read frameTick so Canvas invalidates every frame
-        val drawVersion = frameTick
-
-        Canvas(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(72.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(Color.Black.copy(alpha = 0.25f))
-        ) {
-            @Suppress("UNUSED_EXPRESSION")
-            drawVersion
-            val width = size.width
-            val height = size.height
-            val barCount = 24
-            val gap = 2f
-            val barWidth = ((width - gap * (barCount - 1)) / barCount).coerceAtLeast(2f)
-
-            when (style) {
-                VisualizerStyle.BARS, VisualizerStyle.MIRROR -> {
-                    val mid = height / 2f
-                    for (i in 0 until barCount) {
-                        val amp = display[i % display.size]
-                        val x = i * (barWidth + gap)
-                        if (style == VisualizerStyle.MIRROR) {
-                            val h = (mid * amp).coerceAtLeast(2f)
-                            drawRect(accentColor, Offset(x, mid - h), androidx.compose.ui.geometry.Size(barWidth, h))
-                            drawRect(accentColor.copy(alpha = 0.45f), Offset(x, mid), androidx.compose.ui.geometry.Size(barWidth, h))
-                        } else {
-                            val barHeight = (height * amp).coerceAtLeast(3f)
-                            drawRect(
-                                color = accentColor,
-                                topLeft = Offset(x, height - barHeight),
-                                size = androidx.compose.ui.geometry.Size(barWidth, barHeight)
-                            )
-                        }
-                    }
-                }
-                VisualizerStyle.WAVE, VisualizerStyle.RIBBON -> {
-                    val path = Path()
-                    for (i in 0 until barCount) {
-                        val x = (i.toFloat() / (barCount - 1)) * width
-                        val y = height - (display[i] * height)
-                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-                    }
-                    val strokeW = if (style == VisualizerStyle.RIBBON) 4f else 3f
-                    drawPath(path, accentColor.copy(alpha = 0.9f), style = Stroke(width = strokeW))
-                }
-                VisualizerStyle.PULSE -> {
-                    var sum = 0f
-                    for (v in display) sum += v
-                    val avg = sum / display.size
-                    drawCircle(
-                        color = accentColor.copy(alpha = 0.65f),
-                        radius = (height / 3f) + (avg * height / 3f),
-                        center = Offset(width / 2, height / 2)
-                    )
-                }
-                VisualizerStyle.DOTS -> {
-                    val cols = 16
-                    val cellW = width / cols
-                    for (c in 0 until cols) {
-                        val amp = display[c % display.size]
-                        val rows = (amp * 6).toInt().coerceIn(1, 6)
-                        for (r in 0 until rows) {
-                            drawCircle(
-                                color = accentColor,
-                                radius = cellW * 0.2f,
-                                center = Offset(c * cellW + cellW / 2, height - (r + 1) * (height / 7f))
-                            )
-                        }
-                    }
-                }
-                VisualizerStyle.RADAR, VisualizerStyle.PARTICLES -> {
-                    val count = 16
-                    val centerX = width / 2
-                    val centerY = height / 2
-                    val angleStep = (2 * Math.PI / count).toFloat()
-                    for (i in 0 until count) {
-                        val amp = display[i % display.size]
-                        val base = height / 5f
-                        val dist = base + amp * (height / 3f)
-                        val angle = i * angleStep
-                        val px = centerX + (dist * cos(angle.toDouble())).toFloat()
-                        val py = centerY + (dist * sin(angle.toDouble())).toFloat()
-                        val r = if (style == VisualizerStyle.PARTICLES) {
-                            2.dp.toPx() + amp * 5.dp.toPx()
-                        } else {
-                            (amp * 4.5.dp.toPx()).coerceAtLeast(2.dp.toPx())
-                        }
-                        drawCircle(accentColor, r, Offset(px, py))
-                    }
-                }
-            }
-        }
-    }
-
-
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     private fun TrackList(
@@ -1578,19 +1839,29 @@ class MainActivity : ComponentActivity() {
         cardBg: Color,
         textColor: Color,
         subTextColor: Color,
+        accentColor: Color,
+        currentTrack: MusicTrack?,
+        favoriteUris: Set<String>,
         onTrackSelect: (MusicTrack) -> Unit,
-        onTrackLongClick: (MusicTrack) -> Unit
+        onTrackLongClick: (MusicTrack) -> Unit,
+        onToggleFavorite: (MusicTrack) -> Unit,
+        onEditTrack: (MusicTrack) -> Unit
     ) {
         if (tracks.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No tracks found.", color = subTextColor)
             }
         } else {
-            LazyColumn {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 4.dp)
+            ) {
                 items(
                     items = tracks,
                     key = { it.uri.toString() }
                 ) { track ->
+                    val isCurrent = currentTrack == track
+                    val isFav = favoriteUris.contains(track.uri.toString())
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1600,8 +1871,9 @@ class MainActivity : ComponentActivity() {
                                 onLongClick = { onTrackLongClick(track) }
                             ),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (currentTrack == track) cardBg.copy(alpha = 0.8f) else cardBg
-                        )
+                            containerColor = if (isCurrent) accentColor.copy(alpha = 0.2f) else cardBg
+                        ),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -1610,15 +1882,34 @@ class MainActivity : ComponentActivity() {
                             AsyncAlbumArt(
                                 uri = track.uri,
                                 existing = track.artwork,
-                                accent = currentTheme.accent,
+                                accent = accentColor,
                                 sizeDp = 40
                             )
 
                             Spacer(modifier = Modifier.width(12.dp))
 
-                            Column {
-                                Text(text = track.title, color = textColor, fontSize = 16.sp, maxLines = 1)
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = track.title, 
+                                    color = if (isCurrent) accentColor else textColor, 
+                                    fontSize = 16.sp, 
+                                    maxLines = 1,
+                                    fontWeight = if (isCurrent) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                )
                                 Text(text = "${track.artist} • ${track.genre}", color = subTextColor, fontSize = 12.sp, maxLines = 1)
+                            }
+
+                            IconButton(onClick = { onToggleFavorite(track) }) {
+                                Icon(
+                                    imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = "Favorite",
+                                    tint = if (isFav) Color.Red else subTextColor,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            IconButton(onClick = { onEditTrack(track) }) {
+                                Icon(Icons.Default.Edit, contentDescription = "Edit Tags", tint = subTextColor, modifier = Modifier.size(20.dp))
                             }
                         }
                     }
@@ -1628,19 +1919,22 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun ArtistList(artists: List<String>, theme: AppTheme, cardBg: Color, textColor: Color, onArtistClick: (String) -> Unit) {
+    private fun ArtistList(artists: List<String>, themeAccent: Color, cardBg: Color, textColor: Color, onArtistClick: (String) -> Unit) {
         if (artists.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No artists found.", color = Color.Gray) }
         } else {
-            LazyColumn {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 4.dp)
+            ) {
                 items(artists) { artist ->
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { onArtistClick(artist) },
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF222222)),
-                        colors = CardDefaults.cardColors(containerColor = cardBg)
+                        colors = CardDefaults.cardColors(containerColor = cardBg),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Person, contentDescription = null, tint = theme.accent)
+                            Icon(Icons.Default.Person, contentDescription = null, tint = themeAccent)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(text = artist, color = textColor, fontSize = 16.sp)
                         }
@@ -1651,19 +1945,22 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun GenreList(genres: List<String>, theme: AppTheme, cardBg: Color, textColor: Color, onGenreClick: (String) -> Unit) {
+    private fun GenreList(genres: List<String>, themeAccent: Color, cardBg: Color, textColor: Color, onGenreClick: (String) -> Unit) {
         if (genres.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No genres found.", color = Color.Gray) }
         } else {
-            LazyColumn {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 4.dp)
+            ) {
                 items(genres) { genre ->
                     Card(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { onGenreClick(genre) },
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF222222)),
-                        colors = CardDefaults.cardColors(containerColor = cardBg)
+                        colors = CardDefaults.cardColors(containerColor = cardBg),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Icon(IconMusicNote, contentDescription = null, tint = theme.accent)
+                            Icon(IconMusicNote, contentDescription = null, tint = themeAccent)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(text = genre, color = textColor, fontSize = 16.sp)
                         }
@@ -1676,7 +1973,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun PlaylistView(
         playlists: List<Playlist>,
-        theme: AppTheme,
+        themeAccent: Color,
         cardBg: Color,
         textColor: Color,
         onCreateNew: () -> Unit,
@@ -1686,7 +1983,8 @@ class MainActivity : ComponentActivity() {
             Button(
                 onClick = onCreateNew,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = theme.accent)
+                colors = ButtonDefaults.buttonColors(containerColor = themeAccent),
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Text("Create New Playlist", color = Color.Black)
             }
@@ -1696,12 +1994,15 @@ class MainActivity : ComponentActivity() {
             if (playlists.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("No playlists yet. Create one above!", color = Color.Gray) }
             } else {
-                LazyColumn {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(vertical = 4.dp)
+                ) {
                     items(playlists) { playlist ->
                         Card(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).clickable { onPlayPlaylist(playlist) },
-                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF222222)),
-                            colors = CardDefaults.cardColors(containerColor = cardBg)
+                            colors = CardDefaults.cardColors(containerColor = cardBg),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
                             Row(
                                 modifier = Modifier.padding(16.dp),
@@ -1712,7 +2013,7 @@ class MainActivity : ComponentActivity() {
                                     Text(playlist.name, color = textColor, fontSize = 16.sp)
                                     Text("${playlist.tracks.size} Tracks", color = Color.Gray, fontSize = 12.sp)
                                 }
-                                Icon(IconPlayArrow, contentDescription = "Play Playlist", tint = theme.accent)
+                                Icon(IconPlayArrow, contentDescription = "Play Playlist", tint = themeAccent)
                             }
                         }
                     }
@@ -1722,16 +2023,137 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    private fun AboutView(theme: AppTheme, cardBg: Color, textColor: Color) {
+    private fun FavoritesView(
+        allTracks: List<MusicTrack>,
+        videosList: List<VideoItem>,
+        photosList: List<PhotoItem>,
+        favoriteUris: Set<String>,
+        cardBg: Color,
+        textColor: Color,
+        subTextColor: Color,
+        accentColor: Color,
+        onTrackSelect: (MusicTrack) -> Unit,
+        onVideoSelect: (VideoItem) -> Unit,
+        onPhotoSelect: (PhotoItem) -> Unit,
+        onToggleFavorite: (Uri) -> Unit
+    ) {
+        val favTracks = allTracks.filter { favoriteUris.contains(it.uri.toString()) }
+        val favVideos = videosList.filter { favoriteUris.contains(it.contentUri.toString()) }
+        val favPhotos = photosList.filter { favoriteUris.contains(it.contentUri.toString()) }
+
+        if (favTracks.isEmpty() && favVideos.isEmpty() && favPhotos.isEmpty()) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No favorites yet! Tap the heart icon on any song, video, or photo.", color = subTextColor)
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(vertical = 4.dp)
+            ) {
+                if (favTracks.isNotEmpty()) {
+                    item {
+                        Text("Favorite Songs (${favTracks.size})", color = accentColor, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
+                    }
+                    items(favTracks, key = { "fav_track_${it.uri}" }) { track ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable { onTrackSelect(track) },
+                            colors = CardDefaults.cardColors(containerColor = cardBg),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                AsyncAlbumArt(uri = track.uri, existing = track.artwork, accent = accentColor, sizeDp = 40)
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(track.title, color = textColor, fontSize = 15.sp, maxLines = 1)
+                                    Text(track.artist, color = subTextColor, fontSize = 12.sp, maxLines = 1)
+                                }
+                                IconButton(onClick = { onToggleFavorite(track.uri) }) {
+                                    Icon(Icons.Default.Favorite, contentDescription = "Unfavorite", tint = Color.Red, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (favVideos.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Favorite Videos (${favVideos.size})", color = accentColor, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
+                    }
+                    items(favVideos, key = { "fav_video_${it.contentUri}" }) { video ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable { onVideoSelect(video) },
+                            colors = CardDefaults.cardColors(containerColor = cardBg),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp))) {
+                                    VideoThumbnail(contentUri = video.contentUri, modifier = Modifier.fillMaxSize())
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(video.title, color = textColor, fontSize = 15.sp, maxLines = 1)
+                                    Text("${video.sizeBytes / (1024 * 1024)} MB", color = subTextColor, fontSize = 12.sp)
+                                }
+                                IconButton(onClick = { onToggleFavorite(video.contentUri) }) {
+                                    Icon(Icons.Default.Favorite, contentDescription = "Unfavorite", tint = Color.Red, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (favPhotos.isNotEmpty()) {
+                    item {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Favorite Photos (${favPhotos.size})", color = accentColor, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.padding(vertical = 8.dp))
+                    }
+                    items(favPhotos, key = { "fav_photo_${it.contentUri}" }) { photo ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clickable { onPhotoSelect(photo) },
+                            colors = CardDefaults.cardColors(containerColor = cardBg),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Row(modifier = Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp))) {
+                                    PhotoThumb(uri = photo.contentUri, modifier = Modifier.fillMaxSize())
+                                }
+                                Spacer(modifier = Modifier.width(12.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(photo.title, color = textColor, fontSize = 15.sp, maxLines = 1)
+                                    Text("Photo", color = subTextColor, fontSize = 12.sp)
+                                }
+                                IconButton(onClick = { onToggleFavorite(photo.contentUri) }) {
+                                    Icon(Icons.Default.Favorite, contentDescription = "Unfavorite", tint = Color.Red, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun AboutView(themeAccent: Color, cardBg: Color, textColor: Color) {
         val context = LocalContext.current
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Card(
                 modifier = Modifier.padding(24.dp).fillMaxWidth(),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF222222)),
-                colors = CardDefaults.cardColors(containerColor = cardBg)
+                colors = CardDefaults.cardColors(containerColor = cardBg),
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("MediaNexpo", fontSize = 24.sp, color = theme.accent)
+                    Text("MediaNexpo", fontSize = 24.sp, color = themeAccent)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text("Created by RomLord14495 (aka Kyle) from XDA", fontSize = 13.sp, color = textColor)
                     Spacer(modifier = Modifier.height(8.dp))
@@ -1742,7 +2164,8 @@ class MainActivity : ComponentActivity() {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/crabcakes97/MediaNexpo"))
                             context.startActivity(intent)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = theme.accent)
+                        colors = ButtonDefaults.buttonColors(containerColor = themeAccent),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("View on GitHub", color = Color.Black)
                     }
@@ -1827,6 +2250,9 @@ class MainActivity : ComponentActivity() {
                 val scannedVideos = VideoRepository.scanLocalVideos(this@MainActivity)
                 videosList.clear()
                 videosList.addAll(scannedVideos)
+                val scannedPhotos = PhotoRepository.scanLocalPhotos(this@MainActivity)
+                photosList.clear()
+                photosList.addAll(scannedPhotos)
                 
                 saveLibraryToCache(distinctList)
                 isScanning = false
@@ -1915,12 +2341,9 @@ class MainActivity : ComponentActivity() {
         return MusicTrack(fallbackName, title, artist, genre, uri, artwork)
     }
 
-    // ── Smart resume (audiobook / podcast) ──────────────────────────────
     private fun savePlaybackPosition(uri: Uri, positionMs: Long) {
-        // Only save if we've listened past 5 seconds and aren't near the end
         if (positionMs < 5_000L) return
         if (totalDurationMs > 0 && positionMs > totalDurationMs - 10_000L) {
-            // Near the end – clear so next open starts from beginning
             getSharedPreferences("resume_positions", MODE_PRIVATE)
                 .edit().remove(uri.toString()).apply()
             return
@@ -1934,11 +2357,6 @@ class MainActivity : ComponentActivity() {
     private fun loadPlaybackPosition(uri: Uri): Long {
         return getSharedPreferences("resume_positions", MODE_PRIVATE)
             .getLong(uri.toString(), 0L)
-    }
-
-    private fun clearPlaybackPosition(uri: Uri) {
-        getSharedPreferences("resume_positions", MODE_PRIVATE)
-            .edit().remove(uri.toString()).apply()
     }
 
     private fun applyPlaybackParams() {
@@ -1963,12 +2381,15 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun playTrack(track: MusicTrack) {
-        // Save position of the previous track before switching
         currentTrack?.let { prev ->
             if (currentPositionMs > 0) savePlaybackPosition(prev.uri, currentPositionMs)
         }
 
         currentTrack = track
+        trackBookmarks.clear()
+        loopEnabled = false
+        loopAMs = null
+        loopBMs = null
         player?.stop()
         player?.clearMediaItems()
 
@@ -2040,13 +2461,6 @@ class MainActivity : ComponentActivity() {
         player?.repeatMode = repeatModeState
     }
 
-    private fun formatTime(timeMs: Long): String {
-        val totalSeconds = (timeMs / 1000).toInt()
-        val minutes = totalSeconds / 60
-        val seconds = totalSeconds % 60
-        return String.format("%d:%02d", minutes, seconds)
-    }
-
     override fun onPause() {
         super.onPause()
         currentTrack?.let { savePlaybackPosition(it.uri, currentPositionMs) }
@@ -2061,27 +2475,869 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
+fun CurrentPlayerSection(
+    currentTrack: MusicTrack?,
+    isPlayingState: Boolean,
+    isPlayerMinimized: Boolean,
+    onToggleMinimize: () -> Unit,
+    currentPositionMs: Long,
+    totalDurationMs: Long,
+    activeCardBg: Color,
+    textColor: Color,
+    subTextColor: Color,
+    accentColor: Color,
+    selectedVisualizer: VisualizerStyle,
+    isSpinningArtEnabled: Boolean,
+    onToggleSpinningArt: (Boolean) -> Unit,
+    gaplessPlaybackEnabled: Boolean,
+    onToggleGapless: (Boolean) -> Unit,
+    isShuffleEnabled: Boolean,
+    repeatModeState: Int,
+    playbackSpeed: Float,
+    playbackPitch: Float,
+    speedOptions: List<Float>,
+    pitchOptions: List<Float>,
+    showSpeedMenu: Boolean,
+    onShowSpeedMenuChange: (Boolean) -> Unit,
+    showPitchMenu: Boolean,
+    onShowPitchMenuChange: (Boolean) -> Unit,
+    sleepMinutesLeft: Int,
+    loopEnabled: Boolean,
+    loopAMs: Long?,
+    loopBMs: Long?,
+    trackBookmarks: List<Long>,
+    onSeek: (Long) -> Unit,
+    onPlayPause: () -> Unit,
+    onPrevious: () -> Unit,
+    onNext: () -> Unit,
+    onToggleShuffle: () -> Unit,
+    onCycleRepeat: () -> Unit,
+    onSetSpeed: (Float) -> Unit,
+    onSetPitch: (Float) -> Unit,
+    onSetSleep: (Int) -> Unit,
+    onSetLoop: (Long?, Long?, Boolean) -> Unit,
+    onClearBookmarks: () -> Unit,
+    onAddBookmark: (Long) -> Unit
+) {
+    currentTrack?.let { track ->
+        var totalDragDistance by remember { mutableFloatStateOf(0f) }
+
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp)
+                .pointerInput(isPlayerMinimized) {
+                    detectVerticalDragGestures(
+                        onDragStart = { totalDragDistance = 0f },
+                        onDragEnd = {
+                            if (totalDragDistance > 25f) {
+                                if (!isPlayerMinimized) onToggleMinimize()
+                            } else if (totalDragDistance < -25f) {
+                                if (isPlayerMinimized) onToggleMinimize()
+                            }
+                            totalDragDistance = 0f
+                        },
+                        onVerticalDrag = { change, dragAmount ->
+                            change.consume()
+                            totalDragDistance += dragAmount
+                        }
+                    )
+                },
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = activeCardBg)
+        ) {
+            Column(modifier = Modifier.padding(12.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = if (isPlayerMinimized) {
+                            if (sleepMinutesLeft > 0) "Now Playing (Sleep: ${sleepMinutesLeft}m) — Swipe Up" else "Now Playing (Minimized — Swipe Up)"
+                        } else {
+                            if (sleepMinutesLeft > 0) "Now Playing • Sleep Timer Active: ${sleepMinutesLeft}m remaining" else "Now Playing (Swipe Down to Minimize)"
+                        },
+                        color = if (sleepMinutesLeft > 0) Color(0xFFFFB300) else accentColor,
+                        fontSize = 11.sp
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(
+                            onClick = onToggleMinimize,
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isPlayerMinimized) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = "Minimize",
+                                tint = textColor
+                            )
+                        }
+                    }
+                }
+
+                if (!isPlayerMinimized) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    MainActivityInstanceHelper.MusicVisualizerViewInternal(
+                        isPlaying = isPlayingState,
+                        style = selectedVisualizer,
+                        accentColor = accentColor
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val infiniteTransition = rememberInfiniteTransition(label = "vinyl")
+                    val rotation by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = 360f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(8000, easing = LinearEasing),
+                            repeatMode = RepeatMode.Restart
+                        ),
+                        label = "rotation"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .size(if (isPlayerMinimized) 36.dp else 52.dp)
+                            .rotate(if (isPlayingState && isSpinningArtEnabled) rotation else 0f)
+                    ) {
+                        AsyncAlbumArt(
+                            uri = track.uri,
+                            existing = track.artwork,
+                            accent = accentColor,
+                            sizeDp = if (isPlayerMinimized) 36 else 52
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(track.title, color = textColor, fontSize = if (isPlayerMinimized) 14.sp else 16.sp, maxLines = 1)
+                        Text("${track.artist} • ${track.genre}", color = subTextColor, fontSize = 11.sp, maxLines = 1)
+                    }
+
+                    if (isPlayerMinimized) {
+                        IconButton(onClick = onPlayPause) {
+                            Icon(
+                                imageVector = if (isPlayingState) IconPause else IconPlayArrow,
+                                contentDescription = "Play/Pause",
+                                tint = accentColor
+                            )
+                        }
+                    }
+                }
+
+                if (!isPlayerMinimized) {
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    val sliderPosition = if (totalDurationMs > 0) currentPositionMs.toFloat() / totalDurationMs else 0f
+                    Slider(
+                        value = sliderPosition,
+                        onValueChange = { percent ->
+                            if (totalDurationMs > 0) {
+                                val seekTarget = (percent * totalDurationMs).toLong()
+                                onSeek(seekTarget)
+                            }
+                        },
+                        colors = SliderDefaults.colors(
+                            thumbColor = accentColor,
+                            activeTrackColor = accentColor
+                        )
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(formatTime(currentPositionMs), color = subTextColor, fontSize = 11.sp)
+                        val remainingMs = (totalDurationMs - currentPositionMs).coerceAtLeast(0L)
+                        Text("-${formatTime(remainingMs)}", color = subTextColor, fontSize = 11.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(onClick = onToggleShuffle) {
+                            Icon(IconShuffle, contentDescription = "Shuffle", tint = if (isShuffleEnabled) accentColor else subTextColor)
+                        }
+                        IconButton(onClick = onPrevious) {
+                            Icon(IconSkipPrevious, contentDescription = "Previous", tint = textColor)
+                        }
+                        Button(
+                            onClick = onPlayPause,
+                            colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(imageVector = if (isPlayingState) IconPause else IconPlayArrow, contentDescription = "Play/Pause", tint = Color.Black)
+                        }
+                        IconButton(onClick = onNext) {
+                            Icon(IconSkipNext, contentDescription = "Next", tint = textColor)
+                        }
+                        IconButton(onClick = onCycleRepeat) {
+                            Icon(IconRepeat, contentDescription = "Repeat", tint = if (repeatModeState != Player.REPEAT_MODE_OFF) accentColor else subTextColor)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+                    var showAdvancedTools by remember { mutableStateOf(false) }
+                    OutlinedButton(
+                        onClick = { showAdvancedTools = !showAdvancedTools },
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = buildString {
+                                    append("Advanced Tools & Audio Enhancements")
+                                    if (playbackSpeed != 1.0f) append(" • ${playbackSpeed}x")
+                                    if (gaplessPlaybackEnabled) append(" • Gapless ON")
+                                    if (loopEnabled) append(" • A-B Loop ON")
+                                    if (sleepMinutesLeft > 0) append(" • Sleep (${sleepMinutesLeft}m)")
+                                },
+                                color = accentColor,
+                                fontSize = 12.sp
+                            )
+                            Icon(
+                                imageVector = if (showAdvancedTools) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                                contentDescription = null,
+                                tint = accentColor,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+
+                    if (showAdvancedTools) {
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Text("A-B Segment Loop", color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    OutlinedButton(
+                                        onClick = {
+                                            val a = loopAMs
+                                            if (a == null || (loopBMs != null && a >= loopBMs)) {
+                                                onSetLoop(currentPositionMs, loopBMs, false)
+                                            } else {
+                                                onSetLoop(currentPositionMs, loopBMs, true)
+                                            }
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = PaddingValues(4.dp)
+                                    ) {
+                                        Text(if (loopAMs != null) "A: ${formatTime(loopAMs!!)}" else "Set A", color = textColor, fontSize = 11.sp)
+                                    }
+                                    OutlinedButton(
+                                        onClick = {
+                                            val b = currentPositionMs
+                                            val a = loopAMs
+                                            if (a != null && b > a) {
+                                                onSetLoop(a, b, true)
+                                            } else {
+                                                onSetLoop(loopAMs, b, false)
+                                            }
+                                        },
+                                        modifier = Modifier.weight(1f),
+                                        contentPadding = PaddingValues(4.dp)
+                                    ) {
+                                        Text(if (loopBMs != null) "B: ${formatTime(loopBMs!!)}" else "Set B", color = textColor, fontSize = 11.sp)
+                                    }
+                                    Button(
+                                        onClick = { onSetLoop(null, null, false) },
+                                        colors = ButtonDefaults.buttonColors(containerColor = if (loopEnabled) Color(0xFFB00020) else Color.DarkGray),
+                                        contentPadding = PaddingValues(4.dp)
+                                    ) {
+                                        Text(if (loopEnabled) "Clear Loop" else "Off", color = Color.White, fontSize = 11.sp)
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Divider(color = subTextColor.copy(alpha = 0.2f))
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text("Gapless Playback", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                        Text("Eliminate silence gaps between adjacent tracks", color = subTextColor, fontSize = 10.sp)
+                                    }
+                                    Switch(
+                                        checked = gaplessPlaybackEnabled,
+                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = accentColor),
+                                        onCheckedChange = { onToggleGapless(it) }
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Divider(color = subTextColor.copy(alpha = 0.2f))
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("Spinning Album Art", color = textColor, fontSize = 13.sp)
+                                    Switch(
+                                        checked = isSpinningArtEnabled,
+                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = accentColor),
+                                        onCheckedChange = { onToggleSpinningArt(it) }
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Divider(color = subTextColor.copy(alpha = 0.2f))
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text("DJ Turntable Scratch Pad", color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                var accumulatedDragPx by remember { mutableFloatStateOf(0f) }
+                                var dragStartPositionMs by remember { mutableLongStateOf(0L) }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(44.dp)
+                                        .clip(RoundedCornerShape(8.dp))
+                                        .background(accentColor.copy(alpha = 0.15f))
+                                        .pointerInput(currentTrack) {
+                                            detectHorizontalDragGestures(
+                                                onDragStart = { 
+                                                    accumulatedDragPx = 0f
+                                                    dragStartPositionMs = currentPositionMs
+                                                },
+                                                onDragEnd = { accumulatedDragPx = 0f },
+                                                onHorizontalDrag = { change, dragAmount ->
+                                                    change.consume()
+                                                    accumulatedDragPx += dragAmount
+                                                    val targetPos = (dragStartPositionMs + (accumulatedDragPx * 50f)).toLong()
+                                                    if (totalDurationMs > 0) {
+                                                        val clamped = targetPos.coerceIn(0L, totalDurationMs)
+                                                        onSeek(clamped)
+                                                    }
+                                                }
+                                            )
+                                        },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("Drag horizontally to scratch / scrub audio", color = textColor, fontSize = 11.sp)
+                                }
+
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Divider(color = subTextColor.copy(alpha = 0.2f))
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Speed", color = subTextColor, fontSize = 12.sp)
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Box {
+                                            OutlinedButton(
+                                                onClick = { onShowSpeedMenuChange(true) },
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                                shape = RoundedCornerShape(8.dp)
+                                            ) {
+                                                Text("${playbackSpeed}x", color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                            }
+                                            DropdownMenu(expanded = showSpeedMenu, onDismissRequest = { onShowSpeedMenuChange(false) }) {
+                                                speedOptions.forEach { speed ->
+                                                    DropdownMenuItem(
+                                                        text = { Text("${speed}x", color = if (playbackSpeed == speed) accentColor else textColor) },
+                                                        onClick = { onSetSpeed(speed); onShowSpeedMenuChange(false) }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text("Pitch", color = subTextColor, fontSize = 12.sp)
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Box {
+                                            OutlinedButton(
+                                                onClick = { onShowPitchMenuChange(true) },
+                                                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
+                                                shape = RoundedCornerShape(8.dp)
+                                            ) {
+                                                Text("${playbackPitch}x", color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                            }
+                                            DropdownMenu(expanded = showPitchMenu, onDismissRequest = { onShowPitchMenuChange(false) }) {
+                                                pitchOptions.forEach { pitch ->
+                                                    DropdownMenuItem(
+                                                        text = { Text("${pitch}x", color = if (playbackPitch == pitch) accentColor else textColor) },
+                                                        onClick = { onSetPitch(pitch); onShowPitchMenuChange(false) }
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+object MainActivityInstanceHelper {
+
+    @Composable
+    fun EdgeLightingView(accentColor: Color) {
+        var pulse by remember { mutableFloatStateOf(0f) }
+        LaunchedEffect(Unit) {
+            while (true) {
+                withFrameNanos {
+                    val latest = PlaybackService.latestFftData
+                    val bass = if (latest.isNotEmpty()) latest[0] else 0f
+                    val target = maxOf(PlaybackService.beatPulse, bass)
+                    pulse += (target - pulse) * 0.45f
+                }
+            }
+        }
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val strokeW = 8.dp.toPx() + (pulse * 24.dp.toPx())
+            val alpha = (0.2f + pulse * 0.8f).coerceIn(0f, 1f)
+            drawRoundRect(
+                color = accentColor.copy(alpha = alpha),
+                size = size,
+                cornerRadius = androidx.compose.ui.geometry.CornerRadius(24.dp.toPx()),
+                style = Stroke(width = strokeW)
+            )
+        }
+    }
+
+    @Composable
+    fun MusicVisualizerViewInternal(isPlaying: Boolean, style: VisualizerStyle, accentColor: Color) {
+        val display = remember { FloatArray(32) { 0.05f } }
+        var frameTick by remember { mutableIntStateOf(0) }
+        var timeSec by remember { mutableFloatStateOf(0f) }
+        var beat by remember { mutableFloatStateOf(0f) }
+
+        LaunchedEffect(isPlaying) {
+            if (!isPlaying) {
+                for (i in display.indices) display[i] = 0.05f
+                beat = 0f
+                frameTick++
+                return@LaunchedEffect
+            }
+            while (true) {
+                withFrameNanos { nanos ->
+                    timeSec = (nanos / 1_000_000_000.0).toFloat()
+                    val latest = PlaybackService.latestFftData
+                    val n = minOf(display.size, latest.size)
+                    for (i in 0 until n) {
+                        val target = latest[i]
+                        val k = if (target > display[i]) 0.72f else 0.18f
+                        display[i] += (target - display[i]) * k
+                    }
+                    val bass = if (n > 2) (display[0] + display[1] + display[2]) / 3f else 0f
+                    val pulse = PlaybackService.beatPulse
+                    beat += ((pulse * 0.85f + bass * 0.4f).coerceIn(0f, 1f) - beat) * 0.45f
+                    frameTick++
+                }
+            }
+        }
+
+        val v = frameTick
+        Canvas(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(88.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.Black.copy(alpha = 0.35f))
+        ) {
+            @Suppress("UNUSED_EXPRESSION")
+            v
+            val w = size.width
+            val h = size.height
+            val cx = w / 2f
+            val cy = h / 2f
+            val kick = 1f + beat * 0.55f
+
+            when (style) {
+                VisualizerStyle.BARS -> {
+                    val n = 32
+                    val gap = 2f
+                    val bw = ((w - gap * (n - 1)) / n).coerceAtLeast(1.5f)
+                    for (i in 0 until n) {
+                        val amp = display[i % display.size]
+                        val boost = amp * (1f + beat * 0.5f * (1f - kotlin.math.abs(i - n / 2f) / (n / 2f)))
+                        val bh = (h * boost).coerceAtLeast(2f)
+                        val alpha = (0.55f + amp * 0.45f).coerceIn(0f, 1f)
+                        drawRect(
+                            accentColor.copy(alpha = alpha),
+                            Offset(i * (bw + gap), h - bh),
+                            androidx.compose.ui.geometry.Size(bw, bh)
+                        )
+                    }
+                }
+                VisualizerStyle.MIRROR -> {
+                    val n = 28
+                    val gap = 2f
+                    val bw = ((w - gap * (n - 1)) / n).coerceAtLeast(1.5f)
+                    for (i in 0 until n) {
+                        val amp = display[i % display.size] * kick
+                        val bh = (cy * amp).coerceAtLeast(2f)
+                        val x = i * (bw + gap)
+                        drawRect(accentColor, Offset(x, cy - bh), androidx.compose.ui.geometry.Size(bw, bh))
+                        drawRect(accentColor.copy(alpha = 0.45f), Offset(x, cy), androidx.compose.ui.geometry.Size(bw, bh))
+                    }
+                }
+                VisualizerStyle.WAVE -> {
+                    val path = Path()
+                    val n = display.size
+                    for (i in 0 until n) {
+                        val x = i / (n - 1f) * w
+                        val y = cy + (display[i] - 0.35f) * h * 0.9f * kick
+                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    }
+                    drawPath(path, accentColor.copy(alpha = 0.35f), style = Stroke(12f))
+                    drawPath(path, accentColor, style = Stroke(2.5f))
+                }
+                VisualizerStyle.RIBBON -> {
+                    val path = Path()
+                    val n = display.size
+                    for (i in 0 until n) {
+                        val x = i / (n - 1f) * w
+                        val y = cy + (display[i] - 0.4f) * h * kick
+                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    }
+                    drawPath(path, accentColor.copy(alpha = (0.2f + beat * 0.3f).coerceIn(0f, 1f)), style = Stroke(18f))
+                    drawPath(path, accentColor, style = Stroke(4f))
+                }
+                VisualizerStyle.PULSE -> {
+                    val r1 = h * 0.12f + beat * h * 0.38f
+                    val r2 = h * 0.08f + display[1] * h * 0.22f
+                    drawCircle(accentColor.copy(alpha = (0.15f + beat * 0.35f).coerceIn(0f, 1f)), r1, Offset(cx, cy))
+                    drawCircle(accentColor.copy(alpha = 0.7f), r2, Offset(cx, cy))
+                    for (i in 0 until 12) {
+                        val a = i / 12f * Math.PI * 2 + timeSec
+                        val d = r1 + display[i % display.size] * 12f
+                        drawCircle(accentColor, 2.5f + beat * 3f, Offset(cx + cos(a).toFloat() * d, cy + sin(a).toFloat() * d))
+                    }
+                }
+                VisualizerStyle.BEAT_RING -> {
+                    val rings = 5
+                    for (r in 0 until rings) {
+                        val amp = display[(r * 3) % display.size]
+                        val radius = h * 0.1f + r * h * 0.08f + amp * h * 0.15f * kick
+                        drawCircle(
+                            accentColor.copy(alpha = (0.15f + amp * 0.5f).coerceIn(0f, 1f)),
+                            radius = radius,
+                            center = Offset(cx, cy),
+                            style = Stroke(width = 2f + beat * 4f)
+                        )
+                    }
+                    drawCircle(accentColor.copy(alpha = 0.8f), 6f + beat * 14f, Offset(cx, cy))
+                }
+                VisualizerStyle.EQ_MOUNTAIN -> {
+                    val path = Path()
+                    val n = display.size
+                    path.moveTo(0f, h)
+                    for (i in 0 until n) {
+                        val x = i / (n - 1f) * w
+                        val y = h - display[i] * h * kick
+                        path.lineTo(x, y)
+                    }
+                    path.lineTo(w, h)
+                    path.close()
+                    drawPath(path, accentColor.copy(alpha = (0.35f + beat * 0.25f).coerceIn(0f, 1f)))
+                    val line = Path()
+                    for (i in 0 until n) {
+                        val x = i / (n - 1f) * w
+                        val y = h - display[i] * h * kick
+                        if (i == 0) line.moveTo(x, y) else line.lineTo(x, y)
+                    }
+                    drawPath(line, accentColor, style = Stroke(2f))
+                }
+                VisualizerStyle.SYNTHWAVE -> {
+                    val horizon = h * 0.38f
+                    val bass = display[0]
+                    for (r in 0 until 10) {
+                        val t = r / 9f
+                        val y = horizon + (h - horizon) * t * t * (1f + bass * 0.6f + beat * 0.3f)
+                        drawLine(accentColor.copy(alpha = (0.2f + t * 0.7f).coerceIn(0f, 1f)), Offset(0f, y), Offset(w, y), 1.5f + beat * 2f)
+                    }
+                    for (c in -7..7) {
+                        drawLine(
+                            accentColor.copy(alpha = (0.35f + beat * 0.4f).coerceIn(0f, 1f)),
+                            Offset(cx, horizon),
+                            Offset(cx + c * (w / 14f) * 1.4f, h),
+                            1.5f
+                        )
+                    }
+                    drawCircle(accentColor.copy(alpha = 0.9f), h * 0.09f * (1f + beat * 0.4f), Offset(cx, horizon - 4f))
+                }
+                VisualizerStyle.STARBURST -> {
+                    val rays = 24
+                    for (i in 0 until rays) {
+                        val amp = display[i % display.size]
+                        val a = i / rays.toFloat() * Math.PI * 2 + timeSec * 0.4
+                        val len = h * 0.15f + amp * h * 0.45f * kick
+                        drawLine(
+                            accentColor.copy(alpha = (0.4f + amp * 0.6f).coerceIn(0f, 1f)),
+                            Offset(cx, cy),
+                            Offset(cx + cos(a).toFloat() * len, cy + sin(a).toFloat() * len),
+                            strokeWidth = 2f + beat * 3f
+                        )
+                    }
+                    drawCircle(accentColor, 5f + beat * 12f, Offset(cx, cy))
+                }
+                VisualizerStyle.TUNNEL -> {
+                    drawRect(Color.Black)
+                    for (i in 0 until 36) {
+                        val seed = i * 41.3f
+                        val z = ((seed * 0.01f + timeSec * (1.5f + beat * 4f)) % 1f)
+                        val ang = seed
+                        val rad = z * minOf(w, h) * 0.55f
+                        drawCircle(
+                            accentColor.copy(alpha = (0.2f + z * 0.8f).coerceIn(0f, 1f)),
+                            1.5f + z * 4f * (0.5f + beat),
+                            Offset(cx + cos(ang.toDouble()).toFloat() * rad, cy + sin(ang.toDouble()).toFloat() * rad)
+                        )
+                    }
+                    drawCircle(accentColor.copy(alpha = (beat * 0.35f).coerceIn(0f, 1f)), 20f + beat * 40f, Offset(cx, cy), style = Stroke(2f))
+                }
+                VisualizerStyle.LIQUID -> {
+                    val path = Path()
+                    val n = 24
+                    path.moveTo(0f, h)
+                    for (i in 0 until n) {
+                        val x = i / (n - 1f) * w
+                        val wave = sin((i * 0.55f + timeSec * 3f).toDouble()).toFloat() * 0.08f
+                        val y = h - (display[i % display.size] + wave) * h * 0.95f * (0.7f + beat * 0.5f)
+                        path.lineTo(x, y)
+                    }
+                    path.lineTo(w, h)
+                    path.close()
+                    drawPath(path, accentColor.copy(alpha = 0.45f))
+                }
+                VisualizerStyle.VU_METERS -> {
+                    val meters = 8
+                    val gap = 6f
+                    val mw = ((w - gap * (meters - 1)) / meters)
+                    for (m in 0 until meters) {
+                        val amp = display[(m * 3) % display.size] * kick
+                        val segs = 10
+                        val segH = (h - 4f) / segs
+                        val lit = (amp * segs).toInt().coerceIn(1, segs)
+                        for (s in 0 until lit) {
+                            val t = s / segs.toFloat()
+                            val col = when {
+                                t > 0.8f -> Color(0xFFFF5252)
+                                t > 0.55f -> Color(0xFFFFEE58)
+                                else -> accentColor
+                            }
+                            drawRect(
+                                col.copy(alpha = 0.85f),
+                                Offset(m * (mw + gap), h - (s + 1) * segH),
+                                androidx.compose.ui.geometry.Size(mw, segH - 1.5f)
+                            )
+                        }
+                    }
+                }
+                VisualizerStyle.KALEIDO -> {
+                    val arms = 8
+                    for (arm in 0 until arms) {
+                        val base = arm / arms.toFloat() * Math.PI * 2 + timeSec * 0.5
+                        val path = Path()
+                        for (i in 0 until 12) {
+                            val amp = display[i % display.size]
+                            val a = base + i * 0.08
+                            val d = 8f + i * (h * 0.04f) + amp * h * 0.2f * kick
+                            val x = cx + cos(a).toFloat() * d
+                            val y = cy + sin(a).toFloat() * d
+                            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                        }
+                        drawPath(path, accentColor.copy(alpha = (0.55f + beat * 0.35f).coerceIn(0f, 1f)), style = Stroke(2.5f))
+                    }
+                }
+                VisualizerStyle.SPARKLINE -> {
+                    val cols = 16
+                    val rows = 4
+                    val cw = w / cols
+                    val rh = h / rows
+                    for (r in 0 until rows) {
+                        for (c in 0 until cols) {
+                            val amp = display[(c + r * 3) % display.size] * (0.7f + beat * 0.5f)
+                            if (amp < 0.12f) continue
+                            drawCircle(
+                                accentColor.copy(alpha = (0.3f + amp * 0.7f).coerceIn(0f, 1f)),
+                                radius = ((minOf(cw, rh) * 0.15f) + amp * minOf(cw, rh) * 0.3f).coerceIn(0f, minOf(cw, rh)),
+                                center = Offset(c * cw + cw / 2f, r * rh + rh / 2f)
+                            )
+                        }
+                    }
+                }
+                VisualizerStyle.NEON_VORTEX -> {
+                    val points = 60
+                    val path = Path()
+                    for (i in 0 until points) {
+                        val t = i / points.toFloat()
+                        val amp = display[(i % 16)]
+                        val angle = t * Math.PI * 8 + (timeSec * (2f + beat * 2f)) 
+                        val radius = t * (minOf(w, h) / 2f) * (1f + amp * 0.6f * kick)
+                        val x = cx + cos(angle).toFloat() * radius
+                        val y = cy + sin(angle).toFloat() * radius
+                        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
+                    }
+                    drawPath(path, accentColor.copy(alpha = (0.2f + beat * 0.4f).coerceIn(0f, 1f)), style = Stroke(6f + beat * 10f))
+                    drawPath(path, accentColor, style = Stroke(2f))
+                }
+                VisualizerStyle.CYBER_PARTICLES -> {
+                    for (i in 0 until 32) {
+                        val amp = display[i]
+                        val angle = (i * 137.5) + (timeSec * 50f)
+                        val distance = (amp * (w / 2f) * kick) + (beat * 10f)
+                        val px = cx + cos(angle).toFloat() * distance
+                        val py = cy + sin(angle).toFloat() * distance
+                        drawCircle(accentColor.copy(alpha = (0.4f + amp).coerceIn(0f, 1f)), radius = 2f + (amp * 12f * kick), center = Offset(px, py))
+                    }
+                }
+                VisualizerStyle.FREQ_POLYGON -> {
+                    val path = Path()
+                    val n = 24
+                    for (i in 0 until n) {
+                        val amp = display[i]
+                        val angle = i / n.toFloat() * Math.PI * 2 + (timeSec * 0.2f)
+                        val r = h * 0.2f + (amp * h * 0.4f * kick)
+                        val px = cx + cos(angle).toFloat() * r
+                        val py = cy + sin(angle).toFloat() * r
+                        if (i == 0) path.moveTo(px, py) else path.lineTo(px, py)
+                    }
+                    path.close()
+                    drawPath(path, accentColor.copy(alpha = (0.15f + beat * 0.35f).coerceIn(0f, 1f)))
+                    drawPath(path, accentColor, style = Stroke(3f + beat * 4f))
+                }
+            }
+        }
+    }
+}
+
+private fun formatTime(timeMs: Long): String {
+    val totalSeconds = (timeMs / 1000).toInt()
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return String.format("%d:%02d", minutes, seconds)
+}
+
+@Composable
+fun FullscreenImageView(
+    uri: Uri,
+    title: String,
+    accentColor: Color,
+    isFavorite: Boolean,
+    onDismiss: () -> Unit,
+    onShare: () -> Unit,
+    onToggleFavorite: () -> Unit
+) {
+    val context = LocalContext.current
+    var bitmap by remember(uri) { mutableStateOf<Bitmap?>(null) }
+
+    LaunchedEffect(uri) {
+        withContext(Dispatchers.IO) {
+            try {
+                context.contentResolver.openInputStream(uri)?.use { stream ->
+                    bitmap = BitmapFactory.decodeStream(stream)
+                }
+            } catch (_: Exception) {}
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .clickable(enabled = false) {}
+    ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap!!.asImageBitmap(),
+                contentDescription = title,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit
+            )
+        } else {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = accentColor)
+            }
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color.Black.copy(alpha = 0.6f))
+                .padding(12.dp)
+                .align(Alignment.TopCenter),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onDismiss) {
+                Icon(Icons.Default.ArrowBack, contentDescription = "Close", tint = Color.White)
+            }
+            Text(
+                text = title,
+                color = Color.White,
+                fontSize = 16.sp,
+                maxLines = 1,
+                modifier = Modifier.weight(1f).padding(horizontal = 8.dp)
+            )
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                    contentDescription = "Favorite",
+                    tint = if (isFavorite) Color.Red else Color.White
+                )
+            }
+            IconButton(onClick = onShare) {
+                Icon(Icons.Default.Share, contentDescription = "Share", tint = accentColor)
+            }
+        }
+    }
+}
+
+@Composable
 fun AudioEffectsSettingsSection(
     textColor: Color = Color.Black,
     subTextColor: Color = Color(0xFF444444),
     cardBg: Color = Color.White.copy(alpha = 0.3f),
     accentColor: Color = Color(0xFFBB86FC)
 ) {
-    var eqEnabled by remember { 
-        mutableStateOf(PlaybackService.eqEnabled) 
-    }
-    var bassLevel by remember { 
-        mutableFloatStateOf(PlaybackService.bassStrength.toFloat() / 1000f) 
-    }
-    var virtLevel by remember { 
-        mutableFloatStateOf(PlaybackService.virtualizerStrength.toFloat() / 1000f) 
-    }
-    var gainLevel by remember { 
-        mutableFloatStateOf(PlaybackService.gainMb.toFloat() / 1000f) 
-    }
+    var eqEnabled by remember { mutableStateOf(PlaybackService.eqEnabled) }
+    var bassLevel by remember { mutableFloatStateOf(PlaybackService.bassStrength.toFloat() / 1000f) }
+    var virtLevel by remember { mutableFloatStateOf(PlaybackService.virtualizerStrength.toFloat() / 1000f) }
+    var gainLevel by remember { mutableFloatStateOf(PlaybackService.gainMb.toFloat() / 1000f) }
 
     val bandFreqs = listOf("60 Hz", "230 Hz", "910 Hz", "3.6 kHz", "14 kHz")
-    // Android Equalizer uses millibels (−1500..1500). UI shows dB (−15..15).
     val eqBands = remember {
         mutableStateListOf(
             PlaybackService.bandLevels[0].toFloat() / 100f,
@@ -2100,12 +3356,10 @@ fun AudioEffectsSettingsSection(
         Card(
             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
             colors = CardDefaults.cardColors(containerColor = cardBg),
-            border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black.copy(alpha = 0.2f))
+            shape = RoundedCornerShape(12.dp)
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(12.dp),
+                modifier = Modifier.fillMaxWidth().padding(12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -2132,7 +3386,7 @@ fun AudioEffectsSettingsSection(
             Card(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = cardBg),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black.copy(alpha = 0.15f))
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("Audio Enhancements", color = textColor, fontSize = 14.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
@@ -2175,7 +3429,7 @@ fun AudioEffectsSettingsSection(
             Card(
                 modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                 colors = CardDefaults.cardColors(containerColor = cardBg),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.Black.copy(alpha = 0.15f))
+                shape = RoundedCornerShape(12.dp)
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Row(
@@ -2188,7 +3442,7 @@ fun AudioEffectsSettingsSection(
                             onClick = {
                                 for (i in eqBands.indices) {
                                     eqBands[i] = 0f
-                                    PlaybackService.updateBand(i, 0.toShort()) // 0 mB = flat
+                                    PlaybackService.updateBand(i, 0.toShort())
                                 }
                             }
                         ) {
@@ -2213,7 +3467,6 @@ fun AudioEffectsSettingsSection(
                                 colors = SliderDefaults.colors(thumbColor = accentColor, activeTrackColor = accentColor, inactiveTrackColor = accentColor.copy(alpha = 0.3f)),
                                 onValueChange = { newLvl ->
                                     eqBands[index] = newLvl
-                                    // Convert dB → millibels for Android Equalizer API
                                     PlaybackService.updateBand(index, (newLvl * 100f).toInt().toShort())
                                 },
                                 modifier = Modifier.weight(1f)
@@ -2232,10 +3485,6 @@ fun AudioEffectsSettingsSection(
     }
 }
 
-
-
-
-/** Load a scannable QR bitmap (public QR API — needs INTERNET). Offline falls back to text. */
 private suspend fun generateQrBitmap(content: String, size: Int): Bitmap? {
     return withContext(Dispatchers.IO) {
         try {
@@ -2271,12 +3520,6 @@ private suspend fun generateQrBitmap(content: String, size: Int): Bitmap? {
     }
 }
 
-data class VideoFolder(
-    val name: String,
-    val videos: List<VideoItem>
-)
-
-// Simple in-memory caches to stop scroll jank
 private val albumArtCache = android.util.LruCache<String, Bitmap>(64)
 private val videoThumbCache = android.util.LruCache<String, Bitmap>(48)
 
@@ -2302,7 +3545,6 @@ private fun AsyncAlbumArt(
                     val bytes = retriever.embeddedPicture
                     retriever.release()
                     if (bytes != null) {
-                        // downsample
                         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
                         BitmapFactory.decodeByteArray(bytes, 0, bytes.size, bounds)
                         var sample = 1
@@ -2367,7 +3609,6 @@ private fun VideoThumbnail(
                 try {
                     val retriever = MediaMetadataRetriever()
                     retriever.setDataSource(context, contentUri)
-                    // Scaled frame – much cheaper than full-res
                     val full = retriever.getFrameAtTime(1_000_000)
                     retriever.release()
                     if (full != null && (full.width > 320 || full.height > 320)) {
@@ -2411,10 +3652,14 @@ private fun VideoThumbnail(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VideoList(
     videoList: List<VideoItem>,
+    favoriteUris: Set<String>,
     onVideoSelect: (VideoItem) -> Unit,
+    onVideoLongClick: (VideoItem) -> Unit = {},
+    onToggleFavorite: (VideoItem) -> Unit,
     searchQuery: String = "",
     accentColor: Color = Color.Cyan
 ) {
@@ -2430,7 +3675,6 @@ fun VideoList(
     }
 
     if (selectedFolder == null) {
-        // TOP LEVEL – Gallery-style folder cards
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize().padding(8.dp),
@@ -2456,7 +3700,6 @@ fun VideoList(
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
-                            // Gradient overlay for text readability
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -2493,7 +3736,6 @@ fun VideoList(
             }
         }
     } else {
-        // INSIDE FOLDER – video grid + back button
         val folderVideos = videoFolders[selectedFolder] ?: emptyList()
 
         Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
@@ -2529,11 +3771,15 @@ fun VideoList(
                     items = folderVideos,
                     key = { it.contentUri.toString() }
                 ) { video ->
+                    val isFav = favoriteUris.contains(video.contentUri.toString())
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(140.dp)
-                            .clickable { onVideoSelect(video) },
+                            .combinedClickable(
+                                onClick = { onVideoSelect(video) },
+                                onLongClick = { onVideoLongClick(video) }
+                            ),
                         shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
                     ) {
@@ -2542,7 +3788,6 @@ fun VideoList(
                                 contentUri = video.contentUri,
                                 modifier = Modifier.fillMaxSize()
                             )
-                            // Bottom gradient + text
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -2555,6 +3800,17 @@ fun VideoList(
                                         )
                                     )
                             )
+                            IconButton(
+                                onClick = { onToggleFavorite(video) },
+                                modifier = Modifier.align(Alignment.TopEnd).padding(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = "Favorite",
+                                    tint = if (isFav) Color.Red else Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
                             Column(
                                 modifier = Modifier
                                     .align(Alignment.BottomStart)
@@ -2577,6 +3833,197 @@ fun VideoList(
                     }
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun PhotoList(
+    photoList: List<PhotoItem>,
+    favoriteUris: Set<String>,
+    onPhotoSelect: (PhotoItem) -> Unit,
+    onPhotoLongClick: (PhotoItem) -> Unit = {},
+    onToggleFavorite: (PhotoItem) -> Unit,
+    searchQuery: String = "",
+    accentColor: Color = Color.Cyan
+) {
+    var selectedFolder by remember { mutableStateOf<String?>(null) }
+
+    val filtered = photoList.filter {
+        it.title.contains(searchQuery, ignoreCase = true) ||
+            it.path.contains(searchQuery, ignoreCase = true)
+    }
+    val folders = filtered.groupBy {
+        java.io.File(it.path).parentFile?.name ?: "Internal Storage"
+    }
+
+    if (selectedFolder == null) {
+        if (folders.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No photos found", color = Color.Gray)
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier.fillMaxSize().padding(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                folders.forEach { (folderName, photosInFolder) ->
+                    val cover = photosInFolder.firstOrNull()?.contentUri
+                    item {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(140.dp)
+                                .clickable { selectedFolder = folderName },
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
+                        ) {
+                            Box(Modifier.fillMaxSize()) {
+                                if (cover != null) {
+                                    PhotoThumb(uri = cover, modifier = Modifier.fillMaxSize())
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            androidx.compose.ui.graphics.Brush.verticalGradient(
+                                                listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f))
+                                            )
+                                        )
+                                )
+                                Column(
+                                    modifier = Modifier
+                                        .align(Alignment.BottomStart)
+                                        .padding(12.dp)
+                                ) {
+                                    Text(
+                                        folderName,
+                                        color = Color.White,
+                                        fontSize = 15.sp,
+                                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                        maxLines = 1
+                                    )
+                                    Text(
+                                        "${photosInFolder.size} photos",
+                                        color = Color.LightGray,
+                                        fontSize = 12.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        val folderPhotos = folders[selectedFolder] ?: emptyList()
+        Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                TextButton(onClick = { selectedFolder = null }) {
+                    Text("Back", color = accentColor, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    selectedFolder!!,
+                    color = Color.White,
+                    fontSize = 17.sp,
+                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                )
+            }
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(folderPhotos, key = { it.contentUri.toString() }) { photo ->
+                    val isFav = favoriteUris.contains(photo.contentUri.toString())
+                    Card(
+                        modifier = Modifier
+                            .aspectRatio(1f)
+                            .combinedClickable(
+                                onClick = { onPhotoSelect(photo) },
+                                onLongClick = { onPhotoLongClick(photo) }
+                            ),
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.4f))
+                    ) {
+                        Box(Modifier.fillMaxSize()) {
+                            PhotoThumb(uri = photo.contentUri, modifier = Modifier.fillMaxSize())
+                            IconButton(
+                                onClick = { onToggleFavorite(photo) },
+                                modifier = Modifier.align(Alignment.TopEnd).padding(2.dp).size(28.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (isFav) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                                    contentDescription = "Favorite",
+                                    tint = if (isFav) Color.Red else Color.White,
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PhotoThumb(uri: Uri, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val key = uri.toString()
+    var bitmap by remember(key) { mutableStateOf(albumArtCache.get("photo_$key")) }
+
+    LaunchedEffect(key) {
+        if (bitmap == null) {
+            val loaded = withContext(Dispatchers.IO) {
+                try {
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        BitmapFactory.decodeStream(stream, null, bounds)
+                    }
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        var sample = 1
+                        val b2 = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                        BitmapFactory.decodeStream(stream, null, b2)
+                        while ((b2.outWidth / sample) > 320 || (b2.outHeight / sample) > 320) sample *= 2
+                        null
+                    }
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        val opts = BitmapFactory.Options().apply {
+                            inSampleSize = 4
+                            inPreferredConfig = Bitmap.Config.RGB_565
+                        }
+                        BitmapFactory.decodeStream(stream, null, opts)
+                    }
+                } catch (_: Exception) {
+                    null
+                }
+            }
+            if (loaded != null) {
+                albumArtCache.put("photo_$key", loaded)
+                bitmap = loaded
+            }
+        }
+    }
+
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap!!.asImageBitmap(),
+            contentDescription = null,
+            modifier = modifier,
+            contentScale = androidx.compose.ui.layout.ContentScale.Crop
+        )
+    } else {
+        Box(modifier.background(Color.DarkGray), contentAlignment = Alignment.Center) {
+            Text("…", color = Color.White)
         }
     }
 }

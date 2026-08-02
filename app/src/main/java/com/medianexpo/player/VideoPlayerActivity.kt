@@ -16,12 +16,15 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.drag
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -34,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.delay
@@ -98,14 +102,40 @@ fun GestureVideoPlayer(
     }
 
     var showControls by remember { mutableStateOf(true) }
+    var isPlaying by remember { mutableStateOf(true) }
+    var positionMs by remember { mutableLongStateOf(0L) }
+    var durationMs by remember { mutableLongStateOf(0L) }
+    var isSeeking by remember { mutableStateOf(false) }
+    var seekValue by remember { mutableFloatStateOf(0f) }
+
     var seekFeedback by remember { mutableStateOf<String?>(null) }
     var volumeFeedback by remember { mutableStateOf<Int?>(null) }
     var brightnessFeedback by remember { mutableStateOf<Int?>(null) }
     var scrubPreview by remember { mutableStateOf<String?>(null) }
 
+    DisposableEffect(exoPlayer) {
+        val listener = object : Player.Listener {
+            override fun onIsPlayingChanged(playing: Boolean) {
+                isPlaying = playing
+            }
+        }
+        exoPlayer.addListener(listener)
+        onDispose { exoPlayer.removeListener(listener) }
+    }
+
+    LaunchedEffect(exoPlayer) {
+        while (true) {
+            if (!isSeeking) {
+                positionMs = exoPlayer.currentPosition.coerceAtLeast(0L)
+                durationMs = exoPlayer.duration.coerceAtLeast(0L)
+            }
+            delay(200)
+        }
+    }
+
     LaunchedEffect(showControls) {
-        if (showControls) {
-            delay(3500)
+        if (showControls && isPlaying) {
+            delay(4000)
             showControls = false
         }
     }
@@ -128,6 +158,23 @@ fun GestureVideoPlayer(
         }
     }
 
+    fun formatTime(ms: Long): String {
+        if (ms <= 0) return "0:00"
+        val totalSec = (ms / 1000).toInt()
+        val m = totalSec / 60
+        val s = totalSec % 60
+        return String.format("%d:%02d", m, s)
+    }
+
+    fun seekBy(deltaMs: Long) {
+        val dur = exoPlayer.duration.coerceAtLeast(0L)
+        val target = (exoPlayer.currentPosition + deltaMs).coerceIn(0L, dur)
+        exoPlayer.seekTo(target)
+        positionMs = target
+        showControls = true
+        seekFeedback = if (deltaMs < 0) "${deltaMs / 1000}s" else "+${deltaMs / 1000}s"
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -144,7 +191,7 @@ fun GestureVideoPlayer(
                     var lastVolStep = 0f
                     var lastBrightStep = 0f
 
-                    val dragResult = drag(down.id) { change ->
+                    drag(down.id) { change ->
                         val dx = change.positionChange().x
                         val dy = change.positionChange().y
                         totalDx += dx
@@ -157,7 +204,6 @@ fun GestureVideoPlayer(
 
                         if (dragged) {
                             if (abs(totalDy) > abs(totalDx)) {
-                                // Vertical → brightness (left) or volume (right)
                                 if (startX < width / 2f) {
                                     lastBrightStep += -dy
                                     if (abs(lastBrightStep) > height * 0.02f) {
@@ -185,14 +231,11 @@ fun GestureVideoPlayer(
                                 }
                                 scrubPreview = null
                             } else {
-                                // Horizontal → scrub preview
                                 val duration = exoPlayer.duration.coerceAtLeast(1L)
                                 val seekDelta = (totalDx / width * duration * 0.6f).toLong()
                                 val target = (exoPlayer.currentPosition + seekDelta)
                                     .coerceIn(0L, duration)
-                                val mins = (target / 1000 / 60).toInt()
-                                val secs = (target / 1000 % 60).toInt()
-                                scrubPreview = String.format("%d:%02d", mins, secs)
+                                scrubPreview = formatTime(target)
                                 volumeFeedback = null
                                 brightnessFeedback = null
                             }
@@ -200,21 +243,15 @@ fun GestureVideoPlayer(
                     }
 
                     if (!dragged) {
-                        // Possible tap / double-tap
                         val secondDown = withTimeoutOrNull(250L) {
                             awaitFirstDown(requireUnconsumed = false)
                         }
                         if (secondDown != null) {
                             secondDown.consume()
                             if (secondDown.position.x < width / 2f) {
-                                val newPos = (exoPlayer.currentPosition - 10_000L).coerceAtLeast(0L)
-                                exoPlayer.seekTo(newPos)
-                                seekFeedback = "-10s"
+                                seekBy(-10_000L)
                             } else {
-                                val dur = exoPlayer.duration.coerceAtLeast(0L)
-                                val newPos = (exoPlayer.currentPosition + 10_000L).coerceAtMost(dur)
-                                exoPlayer.seekTo(newPos)
-                                seekFeedback = "+10s"
+                                seekBy(10_000L)
                             }
                         } else {
                             showControls = !showControls
@@ -225,6 +262,7 @@ fun GestureVideoPlayer(
                         val target = (exoPlayer.currentPosition + seekDelta)
                             .coerceIn(0L, duration)
                         exoPlayer.seekTo(target)
+                        positionMs = target
                         scrubPreview = null
                     } else {
                         scrubPreview = null
@@ -246,20 +284,139 @@ fun GestureVideoPlayer(
             visible = showControls,
             enter = fadeIn(),
             exit = fadeOut(),
-            modifier = Modifier.align(Alignment.TopStart)
+            modifier = Modifier.fillMaxSize()
         ) {
-            IconButton(
-                onClick = onBack,
+            Box(
                 modifier = Modifier
-                    .padding(top = 16.dp, start = 12.dp)
-                    .size(48.dp)
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.35f))
             ) {
-                Icon(
-                    imageVector = Icons.Default.ArrowBack,
-                    contentDescription = "Back",
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
+                // Top bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.TopStart)
+                        .padding(top = 12.dp, start = 4.dp, end = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
+                    Text(
+                        text = "Video",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+
+                // Center transport — core icons only (no material-icons-extended)
+                Row(
+                    modifier = Modifier.align(Alignment.Center),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(28.dp)
+                ) {
+                    IconButton(
+                        onClick = { seekBy(-10_000L) },
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+                    ) {
+                        Text("-10s", color = Color.White, fontSize = 14.sp)
+                    }
+
+                    IconButton(
+                        onClick = {
+                            if (exoPlayer.isPlaying) exoPlayer.pause() else exoPlayer.play()
+                            isPlaying = exoPlayer.isPlaying
+                            showControls = true
+                        },
+                        modifier = Modifier
+                            .size(72.dp)
+                            .background(Color.White.copy(alpha = 0.2f), CircleShape)
+                    ) {
+                        if (isPlaying) {
+                            // Pause: two bars via text (no Icons.Default.Pause in core set)
+                            Text("II", color = Color.White, fontSize = 28.sp)
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Play",
+                                tint = Color.White,
+                                modifier = Modifier.size(40.dp)
+                            )
+                        }
+                    }
+
+                    IconButton(
+                        onClick = { seekBy(10_000L) },
+                        modifier = Modifier
+                            .size(56.dp)
+                            .background(Color.Black.copy(alpha = 0.45f), CircleShape)
+                    ) {
+                        Text("+10s", color = Color.White, fontSize = 14.sp)
+                    }
+                }
+
+                // Bottom seek bar
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 16.dp, vertical = 20.dp)
+                ) {
+                    val progress = if (durationMs > 0) {
+                        (if (isSeeking) seekValue else positionMs.toFloat() / durationMs)
+                            .coerceIn(0f, 1f)
+                    } else 0f
+
+                    Slider(
+                        value = progress,
+                        onValueChange = { v ->
+                            isSeeking = true
+                            seekValue = v
+                            showControls = true
+                        },
+                        onValueChangeFinished = {
+                            if (durationMs > 0) {
+                                val target = (seekValue * durationMs).toLong()
+                                exoPlayer.seekTo(target)
+                                positionMs = target
+                            }
+                            isSeeking = false
+                        },
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color.White,
+                            activeTrackColor = Color(0xFFBB86FC),
+                            inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        val displayPos = if (isSeeking && durationMs > 0) {
+                            (seekValue * durationMs).toLong()
+                        } else positionMs
+                        Text(formatTime(displayPos), color = Color.White, fontSize = 12.sp)
+                        Text(formatTime(durationMs), color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Tap for controls  ·  Double-tap ±10s  ·  Swipe volume / brightness",
+                        color = Color.White.copy(alpha = 0.45f),
+                        fontSize = 11.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+                }
             }
         }
 
@@ -289,11 +446,7 @@ fun GestureVideoPlayer(
                     .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
                     .padding(horizontal = 24.dp, vertical = 14.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("VOL", color = Color.White, fontSize = 14.sp)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text("Volume  ${volumeFeedback ?: 0}%", color = Color.White, fontSize = 16.sp)
-                }
+                Text("Volume  ${volumeFeedback ?: 0}%", color = Color.White, fontSize = 16.sp)
             }
         }
 
@@ -325,21 +478,6 @@ fun GestureVideoPlayer(
             ) {
                 Text(text = scrubPreview ?: "", color = Color.White, fontSize = 22.sp)
             }
-        }
-
-        AnimatedVisibility(
-            visible = showControls,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 28.dp)
-        ) {
-            Text(
-                text = "Double-tap sides  ·  Swipe up/down  ·  Swipe sideways",
-                color = Color.White.copy(alpha = 0.55f),
-                fontSize = 12.sp
-            )
         }
     }
 }

@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-67:12
-INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-67:12
-INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-67:12
-INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-67:12
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-71:12
+INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-71:12
+INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-71:12
+INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-71:12
 MERGED from [androidx.media3:media3-session:1.2.1] /home/cameron/.gradle/caches/transforms-3/5183579143f3d68207eb1f47f0b94262/transformed/media3-session-1.2.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.media3:media3-ui:1.2.1] /home/cameron/.gradle/caches/transforms-3/7790a1fa12bb5ff365d9bf8bf7ced20f/transformed/media3-ui-1.2.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.media3:media3-extractor:1.2.1] /home/cameron/.gradle/caches/transforms-3/f72a167f069692f02b79cc0fd2a8cd0c/transformed/media3-extractor-1.2.1/AndroidManifest.xml:17:1-22:12
@@ -80,42 +80,58 @@ uses-permission#android.permission.READ_MEDIA_VIDEO
 ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:6:5-75
 	android:name
 		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:6:22-72
+uses-permission#android.permission.READ_MEDIA_IMAGES
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:7:5-76
+	android:name
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:7:22-73
 uses-permission#android.permission.RECORD_AUDIO
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:7:5-71
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:8:5-71
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:7:22-68
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:8:22-68
+uses-permission#android.permission.MODIFY_AUDIO_SETTINGS
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:9:5-80
+	android:name
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:9:22-77
 uses-permission#android.permission.POST_NOTIFICATIONS
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:8:5-77
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:10:5-77
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:8:22-74
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:10:22-74
 uses-permission#android.permission.FOREGROUND_SERVICE
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:9:5-77
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:11:5-77
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:9:22-74
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:11:22-74
 uses-permission#android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:10:5-92
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:12:5-92
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:10:22-89
-uses-permission#android.permission.INTERNET
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:13:5-67
-	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:13:22-64
-uses-permission#android.permission.ACCESS_WIFI_STATE
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:14:5-76
-	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:14:22-73
-uses-permission#android.permission.ACCESS_NETWORK_STATE
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:15:5-79
-MERGED from [androidx.media3:media3-common:1.2.1] /home/cameron/.gradle/caches/transforms-3/39a5c20d6f00810adcb2f7ee4d99be20/transformed/media3-common-1.2.1/AndroidManifest.xml:22:5-79
-MERGED from [androidx.media3:media3-common:1.2.1] /home/cameron/.gradle/caches/transforms-3/39a5c20d6f00810adcb2f7ee4d99be20/transformed/media3-common-1.2.1/AndroidManifest.xml:22:5-79
-MERGED from [androidx.media3:media3-exoplayer:1.2.1] /home/cameron/.gradle/caches/transforms-3/38569ba5495de99da4d16a4c2bd71bda/transformed/media3-exoplayer-1.2.1/AndroidManifest.xml:22:5-79
-MERGED from [androidx.media3:media3-exoplayer:1.2.1] /home/cameron/.gradle/caches/transforms-3/38569ba5495de99da4d16a4c2bd71bda/transformed/media3-exoplayer-1.2.1/AndroidManifest.xml:22:5-79
-	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:15:22-76
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:12:22-89
 uses-permission#android.permission.FOREGROUND_SERVICE_DATA_SYNC
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:16:5-87
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:13:5-87
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:16:22-84
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:13:22-84
+uses-permission#android.permission.WAKE_LOCK
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:14:5-68
+	android:name
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:14:22-65
+uses-permission#android.permission.INTERNET
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:15:5-67
+	android:name
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:15:22-64
+uses-permission#android.permission.ACCESS_WIFI_STATE
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:16:5-76
+	android:name
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:16:22-73
+uses-permission#android.permission.ACCESS_NETWORK_STATE
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:17:5-79
+MERGED from [androidx.media3:media3-common:1.2.1] /home/cameron/.gradle/caches/transforms-3/39a5c20d6f00810adcb2f7ee4d99be20/transformed/media3-common-1.2.1/AndroidManifest.xml:22:5-79
+MERGED from [androidx.media3:media3-common:1.2.1] /home/cameron/.gradle/caches/transforms-3/39a5c20d6f00810adcb2f7ee4d99be20/transformed/media3-common-1.2.1/AndroidManifest.xml:22:5-79
+MERGED from [androidx.media3:media3-exoplayer:1.2.1] /home/cameron/.gradle/caches/transforms-3/38569ba5495de99da4d16a4c2bd71bda/transformed/media3-exoplayer-1.2.1/AndroidManifest.xml:22:5-79
+MERGED from [androidx.media3:media3-exoplayer:1.2.1] /home/cameron/.gradle/caches/transforms-3/38569ba5495de99da4d16a4c2bd71bda/transformed/media3-exoplayer-1.2.1/AndroidManifest.xml:22:5-79
+	android:name
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:17:22-76
+uses-permission#android.permission.CHANGE_WIFI_STATE
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:18:5-76
+	android:name
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:18:22-73
 uses-permission#android.permission.ACCESS_FINE_LOCATION
 ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:19:5-79
 	android:name
@@ -124,19 +140,15 @@ uses-permission#android.permission.ACCESS_COARSE_LOCATION
 ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:20:5-81
 	android:name
 		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:20:22-78
-uses-permission#android.permission.CHANGE_WIFI_STATE
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:5-76
-	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:22-73
 uses-permission#android.permission.NEARBY_WIFI_DEVICES
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:22:5-23:58
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:5-22:58
 	android:usesPermissionFlags
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:23:9-55
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:22:9-55
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:22:22-75
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:22-75
 application
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:25:5-65:19
-INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:25:5-65:19
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:24:5-70:19
+INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:24:5-70:19
 MERGED from [androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:28:5-89
@@ -154,69 +166,77 @@ MERGED from [androidx.startup:startup-runtime:1.1.1] /home/cameron/.gradle/cache
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
 	android:supportsRtl
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:29:9-35
-	android:label
 		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:28:9-35
+	android:label
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:27:9-35
 	android:icon
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:27:9-43
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:26:9-43
 	android:allowBackup
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:26:9-35
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:25:9-35
 	android:theme
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:31:9-66
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:30:9-66
 	android:usesCleartextTraffic
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:30:9-44
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:29:9-44
 activity#com.medianexpo.player.MainActivity
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:33:9-42:20
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:32:9-41:20
 	android:launchMode
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:36:13-43
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:35:13-43
 	android:exported
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:35:13-36
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:34:13-36
 	android:theme
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:37:13-70
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:36:13-70
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:34:13-41
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:33:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:38:13-41:29
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:37:13-40:29
 action#android.intent.action.MAIN
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:39:17-69
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:38:17-69
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:39:25-66
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:38:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:40:17-77
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:39:17-77
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:40:27-74
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:39:27-74
 activity#com.medianexpo.player.VideoPlayerActivity
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:44:9-48:73
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:43:9-47:73
 	android:exported
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:46:13-37
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:45:13-37
 	android:configChanges
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:47:13-91
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:46:13-91
 	android:theme
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:48:13-70
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:47:13-70
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:45:13-48
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:44:13-48
 service#com.medianexpo.player.PlaybackService
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:50:9-57:19
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:49:9-56:19
 	android:exported
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:52:13-36
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:51:13-36
 	android:foregroundServiceType
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:53:13-58
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:52:13-58
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:51:13-44
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:50:13-44
 intent-filter#action:name:androidx.media3.session.MediaSessionService
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:54:13-56:29
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:53:13-55:29
 action#androidx.media3.session.MediaSessionService
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:55:17-86
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:54:17-86
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:55:25-83
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:54:25-83
 service#com.medianexpo.player.LocalShareService
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:60:9-63:56
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:59:9-62:56
 	android:exported
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:62:13-37
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:61:13-37
 	android:foregroundServiceType
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:63:13-53
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:62:13-53
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:61:13-46
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:60:13-46
+service#com.medianexpo.player.share.UniversalShareServer
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:65:9-68:56
+	android:exported
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:67:13-37
+	android:foregroundServiceType
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:68:13-53
+	android:name
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:66:13-55
 uses-sdk
 INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml

@@ -20,202 +20,217 @@
 15    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 15-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:6:5-75
 15-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:6:22-72
-16    <uses-permission android:name="android.permission.RECORD_AUDIO" />
-16-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:7:5-71
-16-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:7:22-68
-17    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-17-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:8:5-77
-17-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:8:22-74
-18    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-18-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:9:5-77
-18-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:9:22-74
-19    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
-19-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:10:5-92
-19-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:10:22-89
-20
-21    <!-- Local Wi‑Fi sharing -->
-22    <uses-permission android:name="android.permission.INTERNET" />
-22-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:13:5-67
-22-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:13:22-64
-23    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-23-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:14:5-76
-23-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:14:22-73
-24    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-24-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:15:5-79
-24-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:15:22-76
-25    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
-25-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:16:5-87
-25-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:16:22-84
-26
-27    <!-- Wi‑Fi Direct -->
+16    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+16-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:7:5-76
+16-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:7:22-73
+17    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+17-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:8:5-71
+17-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:8:22-68
+18    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+18-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:9:5-80
+18-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:9:22-77
+19    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+19-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:10:5-77
+19-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:10:22-74
+20    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+20-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:11:5-77
+20-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:11:22-74
+21    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+21-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:12:5-92
+21-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:12:22-89
+22    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+22-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:13:5-87
+22-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:13:22-84
+23    <uses-permission android:name="android.permission.WAKE_LOCK" />
+23-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:14:5-68
+23-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:14:22-65
+24    <uses-permission android:name="android.permission.INTERNET" />
+24-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:15:5-67
+24-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:15:22-64
+25    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+25-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:16:5-76
+25-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:16:22-73
+26    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+26-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:17:5-79
+26-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:17:22-76
+27    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+27-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:18:5-76
+27-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:18:22-73
 28    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 28-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:19:5-79
 28-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:19:22-76
 29    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 29-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:20:5-81
 29-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:20:22-78
-30    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-30-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:5-76
-30-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:22-73
-31    <uses-permission
-31-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:22:5-23:58
-32        android:name="android.permission.NEARBY_WIFI_DEVICES"
-32-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:22:22-75
-33        android:usesPermissionFlags="neverForLocation" />
-33-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:23:9-55
-34
-35    <permission
-35-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
-36        android:name="com.medianexpo.player.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
-36-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
-37        android:protectionLevel="signature" />
-37-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
-38
-39    <uses-permission android:name="com.medianexpo.player.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
-39-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
-39-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
-40
-41    <application
-41-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:25:5-65:19
-42        android:allowBackup="true"
-42-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:26:9-35
-43        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
-43-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
-44        android:debuggable="true"
-45        android:extractNativeLibs="false"
-46        android:icon="@mipmap/ic_launcher"
-46-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:27:9-43
-47        android:label="MediaNexpo"
+30    <uses-permission
+30-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:5-22:58
+31        android:name="android.permission.NEARBY_WIFI_DEVICES"
+31-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:22-75
+32        android:usesPermissionFlags="neverForLocation" />
+32-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:22:9-55
+33
+34    <permission
+34-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:22:5-24:47
+35        android:name="com.medianexpo.player.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+35-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:23:9-81
+36        android:protectionLevel="signature" />
+36-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:24:9-44
+37
+38    <uses-permission android:name="com.medianexpo.player.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+38-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:26:5-97
+38-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:26:22-94
+39
+40    <application
+40-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:24:5-70:19
+41        android:allowBackup="true"
+41-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:25:9-35
+42        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+42-->[androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
+43        android:debuggable="true"
+44        android:extractNativeLibs="false"
+45        android:icon="@mipmap/ic_launcher"
+45-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:26:9-43
+46        android:label="MediaNexpo"
+46-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:27:9-35
+47        android:supportsRtl="true"
 47-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:28:9-35
-48        android:supportsRtl="true"
-48-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:29:9-35
-49        android:theme="@android:style/Theme.Material.NoActionBar"
-49-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:31:9-66
-50        android:usesCleartextTraffic="true" >
-50-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:30:9-44
-51        <activity
-51-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:33:9-42:20
-52            android:name="com.medianexpo.player.MainActivity"
-52-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:34:13-41
-53            android:exported="true"
-53-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:35:13-36
-54            android:launchMode="singleTop"
-54-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:36:13-43
-55            android:theme="@android:style/Theme.Material.NoActionBar" >
-55-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:37:13-70
-56            <intent-filter>
-56-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:38:13-41:29
-57                <action android:name="android.intent.action.MAIN" />
-57-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:39:17-69
-57-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:39:25-66
-58
-59                <category android:name="android.intent.category.LAUNCHER" />
-59-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:40:17-77
-59-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:40:27-74
-60            </intent-filter>
-61        </activity>
-62        <activity
-62-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:44:9-48:73
-63            android:name="com.medianexpo.player.VideoPlayerActivity"
-63-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:45:13-48
-64            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
-64-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:47:13-91
-65            android:exported="false"
-65-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:46:13-37
-66            android:theme="@android:style/Theme.Material.NoActionBar" />
-66-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:48:13-70
-67
-68        <service
-68-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:50:9-57:19
-69            android:name="com.medianexpo.player.PlaybackService"
-69-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:51:13-44
-70            android:exported="true"
-70-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:52:13-36
-71            android:foregroundServiceType="mediaPlayback" >
-71-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:53:13-58
-72            <intent-filter>
-72-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:54:13-56:29
-73                <action android:name="androidx.media3.session.MediaSessionService" />
-73-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:55:17-86
-73-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:55:25-83
-74            </intent-filter>
-75        </service>
-76
-77        <!-- LAN share / receive -->
-78        <service
-78-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:60:9-63:56
-79            android:name="com.medianexpo.player.LocalShareService"
-79-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:61:13-46
-80            android:exported="false"
-80-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:62:13-37
-81            android:foregroundServiceType="dataSync" />
-81-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:63:13-53
-82
-83        <provider
-83-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:24:9-32:20
-84            android:name="androidx.startup.InitializationProvider"
-84-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:25:13-67
-85            android:authorities="com.medianexpo.player.androidx-startup"
-85-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:26:13-68
-86            android:exported="false" >
-86-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:27:13-37
-87            <meta-data
-87-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
-88                android:name="androidx.emoji2.text.EmojiCompatInitializer"
-88-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
-89                android:value="androidx.startup" />
-89-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
-90            <meta-data
-90-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/cameron/.gradle/caches/transforms-3/f32f8a6bb35ea86a0bdc621e810ebd3e/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:29:13-31:52
-91                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
-91-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/cameron/.gradle/caches/transforms-3/f32f8a6bb35ea86a0bdc621e810ebd3e/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:30:17-78
-92                android:value="androidx.startup" />
-92-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/cameron/.gradle/caches/transforms-3/f32f8a6bb35ea86a0bdc621e810ebd3e/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:31:17-49
-93            <meta-data
-93-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
-94                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
-94-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
-95                android:value="androidx.startup" />
-95-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
-96        </provider>
-97
-98        <receiver
-98-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
-99            android:name="androidx.profileinstaller.ProfileInstallReceiver"
-99-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
-100            android:directBootAware="false"
-100-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
-101            android:enabled="true"
-101-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
-102            android:exported="true"
-102-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
-103            android:permission="android.permission.DUMP" >
-103-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
-104            <intent-filter>
-104-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
-105                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
-105-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
-105-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
-106            </intent-filter>
-107            <intent-filter>
-107-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
-108                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
-108-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
-108-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
-109            </intent-filter>
-110            <intent-filter>
-110-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
-111                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
-111-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
-111-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
-112            </intent-filter>
-113            <intent-filter>
-113-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
-114                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
-114-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
-114-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
-115            </intent-filter>
-116        </receiver>
-117    </application>
-118
-119</manifest>
+48        android:theme="@android:style/Theme.Material.NoActionBar"
+48-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:30:9-66
+49        android:usesCleartextTraffic="true" >
+49-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:29:9-44
+50        <activity
+50-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:32:9-41:20
+51            android:name="com.medianexpo.player.MainActivity"
+51-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:33:13-41
+52            android:exported="true"
+52-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:34:13-36
+53            android:launchMode="singleTop"
+53-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:35:13-43
+54            android:theme="@android:style/Theme.Material.NoActionBar" >
+54-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:36:13-70
+55            <intent-filter>
+55-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:37:13-40:29
+56                <action android:name="android.intent.action.MAIN" />
+56-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:38:17-69
+56-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:38:25-66
+57
+58                <category android:name="android.intent.category.LAUNCHER" />
+58-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:39:17-77
+58-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:39:27-74
+59            </intent-filter>
+60        </activity>
+61        <activity
+61-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:43:9-47:73
+62            android:name="com.medianexpo.player.VideoPlayerActivity"
+62-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:44:13-48
+63            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
+63-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:46:13-91
+64            android:exported="false"
+64-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:45:13-37
+65            android:theme="@android:style/Theme.Material.NoActionBar" />
+65-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:47:13-70
+66
+67        <service
+67-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:49:9-56:19
+68            android:name="com.medianexpo.player.PlaybackService"
+68-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:50:13-44
+69            android:exported="true"
+69-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:51:13-36
+70            android:foregroundServiceType="mediaPlayback" >
+70-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:52:13-58
+71            <intent-filter>
+71-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:53:13-55:29
+72                <action android:name="androidx.media3.session.MediaSessionService" />
+72-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:54:17-86
+72-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:54:25-83
+73            </intent-filter>
+74        </service>
+75
+76        <!-- Legacy LAN share (optional if you keep LocalShareService.kt) -->
+77        <service
+77-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:59:9-62:56
+78            android:name="com.medianexpo.player.LocalShareService"
+78-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:60:13-46
+79            android:exported="false"
+79-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:61:13-37
+80            android:foregroundServiceType="dataSync" />
+80-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:62:13-53
+81
+82        <!-- Universal multi-type LAN share with HTTP 206 -->
+83        <service
+83-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:65:9-68:56
+84            android:name="com.medianexpo.player.share.UniversalShareServer"
+84-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:66:13-55
+85            android:exported="false"
+85-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:67:13-37
+86            android:foregroundServiceType="dataSync" />
+86-->/home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:68:13-53
+87
+88        <provider
+88-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:24:9-32:20
+89            android:name="androidx.startup.InitializationProvider"
+89-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:25:13-67
+90            android:authorities="com.medianexpo.player.androidx-startup"
+90-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:26:13-68
+91            android:exported="false" >
+91-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:27:13-37
+92            <meta-data
+92-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:29:13-31:52
+93                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+93-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:30:17-75
+94                android:value="androidx.startup" />
+94-->[androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:31:17-49
+95            <meta-data
+95-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/cameron/.gradle/caches/transforms-3/f32f8a6bb35ea86a0bdc621e810ebd3e/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:29:13-31:52
+96                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+96-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/cameron/.gradle/caches/transforms-3/f32f8a6bb35ea86a0bdc621e810ebd3e/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:30:17-78
+97                android:value="androidx.startup" />
+97-->[androidx.lifecycle:lifecycle-process:2.7.0] /home/cameron/.gradle/caches/transforms-3/f32f8a6bb35ea86a0bdc621e810ebd3e/transformed/lifecycle-process-2.7.0/AndroidManifest.xml:31:17-49
+98            <meta-data
+98-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:29:13-31:52
+99                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+99-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:30:17-85
+100                android:value="androidx.startup" />
+100-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:31:17-49
+101        </provider>
+102
+103        <receiver
+103-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:34:9-52:20
+104            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+104-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:35:13-76
+105            android:directBootAware="false"
+105-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:36:13-44
+106            android:enabled="true"
+106-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:37:13-35
+107            android:exported="true"
+107-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:38:13-36
+108            android:permission="android.permission.DUMP" >
+108-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:39:13-57
+109            <intent-filter>
+109-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:40:13-42:29
+110                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+110-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:17-91
+110-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:41:25-88
+111            </intent-filter>
+112            <intent-filter>
+112-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:43:13-45:29
+113                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+113-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:17-85
+113-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:44:25-82
+114            </intent-filter>
+115            <intent-filter>
+115-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:46:13-48:29
+116                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+116-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:17-88
+116-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:47:25-85
+117            </intent-filter>
+118            <intent-filter>
+118-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:49:13-51:29
+119                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+119-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:17-95
+119-->[androidx.profileinstaller:profileinstaller:1.3.0] /home/cameron/.gradle/caches/transforms-3/19e15dbf13abf551346cc809eecbb624/transformed/profileinstaller-1.3.0/AndroidManifest.xml:50:25-92
+120            </intent-filter>
+121        </receiver>
+122    </application>
+123
+124</manifest>

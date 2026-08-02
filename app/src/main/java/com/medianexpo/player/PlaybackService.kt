@@ -25,12 +25,18 @@ class PlaybackService : MediaSessionService() {
     private var virtualizer: Virtualizer? = null
     private var loudnessEnhancer: LoudnessEnhancer? = null
     private var currentSessionId: Int = C.AUDIO_SESSION_ID_UNSET
+    private var prevBass = 0f
 
     companion object {
         var instance: PlaybackService? = null
 
         @Volatile
-        var latestFftData = FloatArray(20)
+        var latestFftData = FloatArray(32)
+        @Volatile
+        var latestPcm: ByteArray = ByteArray(0)
+        /** 0..1 kick envelope — spikes on bass hits */
+        @Volatile
+        var beatPulse: Float = 0f
         var eqEnabled = true
         var gainMb = 0
         var bassStrength: Short = 500
@@ -191,15 +197,8 @@ class PlaybackService : MediaSessionService() {
                             waveform: ByteArray?,
                             samplingRate: Int
                         ) {
-                            if (waveform == null || !player.isPlaying) return
-                            val mags = FloatArray(20)
-                            val step = (waveform.size / 20).coerceAtLeast(1)
-                            for (i in 0 until 20) {
-                                val idx = (i * step).coerceIn(0, waveform.size - 1)
-                                val sample = (waveform[idx].toInt() and 0xFF) - 128
-                                mags[i] = (kotlin.math.abs(sample) / 128f).coerceIn(0.05f, 1f)
-                            }
-                            latestFftData = mags
+                            if (waveform == null) return
+                            PlaybackService.latestPcm = waveform.copyOf()
                         }
 
                         override fun onFftDataCapture(
@@ -208,20 +207,33 @@ class PlaybackService : MediaSessionService() {
                             samplingRate: Int
                         ) {
                             if (fft == null || !player.isPlaying) return
-                            val mags = FloatArray(20)
-                            for (i in 0 until 20) {
-                                val reIdx = (2 * i).coerceIn(0, fft.size - 1)
-                                val imIdx = (2 * i + 1).coerceIn(0, fft.size - 1)
-                                val real = fft[reIdx].toFloat()
-                                val imag = fft[imIdx].toFloat()
-                                mags[i] = (hypot(real, imag) / 128f).coerceIn(0.05f, 1f)
+                            val bins = 32
+                            val mags = FloatArray(bins)
+                            // Skip DC bin; sample spectrum with slight log bias toward lows
+                            val usable = (fft.size / 2 - 2).coerceAtLeast(bins)
+                            for (i in 0 until bins) {
+                                val src = 1 + (i * usable / bins)
+                                val reIdx = (2 * src).coerceIn(0, fft.size - 1)
+                                val imIdx = (2 * src + 1).coerceIn(0, fft.size - 1)
+                                val mag = hypot(fft[reIdx].toFloat(), fft[imIdx].toFloat())
+                                // Bass-heavy curve so kicks pop; highs still visible
+                                val weight = 1.35f - (i / bins.toFloat()) * 0.55f
+                                // Soft-knee normalize — more dynamic than flat /128
+                                val norm = (mag * weight / 90f).coerceIn(0f, 1.4f)
+                                mags[i] = (0.06f + norm * 0.94f).coerceIn(0.06f, 1f)
                             }
-                            latestFftData = mags
+                            // Beat pulse: rising edge of low-band energy
+                            val bass = (mags[0] + mags[1] + mags[2]) / 3f
+                            val rise = (bass - prevBass).coerceAtLeast(0f)
+                            prevBass = bass
+                            val pulse = (PlaybackService.beatPulse * 0.72f + rise * 3.2f + bass * 0.15f).coerceIn(0f, 1f)
+                            PlaybackService.beatPulse = pulse
+                            PlaybackService.latestFftData = mags
                         }
                     },
-                    Visualizer.getMaxCaptureRate() / 2, // release: low CPU
-                    false,
-                    true
+                    Visualizer.getMaxCaptureRate() / 3,
+                    true,  // waveform for Lissajous
+                    true   // fft
                 )
                 enabled = true
             }
@@ -250,6 +262,20 @@ class PlaybackService : MediaSessionService() {
                 if (audioSessionId != C.AUDIO_SESSION_ID_UNSET && audioSessionId != 0) {
                     initAudioEffects(audioSessionId)
                     initVisualizer(audioSessionId)
+                }
+            }
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                // Re-attach visualizer when playback actually starts (fixes "works only on adb" on some OEMs)
+                if (isPlaying) {
+                    val sid = player.audioSessionId
+                    if (sid != C.AUDIO_SESSION_ID_UNSET && sid != 0) {
+                        if (audioVisualizer == null || currentSessionId != sid) {
+                            initAudioEffects(sid)
+                            initVisualizer(sid)
+                        } else {
+                            try { audioVisualizer?.enabled = true } catch (_: Exception) {}
+                        }
+                    }
                 }
             }
         })
