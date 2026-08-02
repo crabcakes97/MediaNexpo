@@ -24,7 +24,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -408,10 +411,28 @@ class MainActivity : ComponentActivity() {
     private var selectedTab by mutableStateOf(0)
     private val videosList = mutableStateListOf<VideoItem>()
     private val photosList = mutableStateListOf<PhotoItem>()
+    private val booksList = mutableStateListOf<BookItem>()
+    private val audiobookChapterMap = mutableStateMapOf<String, List<AudiobookChapter>>()
+    private var currentAudiobookChapters by mutableStateOf<List<AudiobookChapter>>(emptyList())
+    private var currentAudiobookIndex by mutableStateOf(0)
     private var currentTheme by mutableStateOf(AppTheme.PURPLE)
     private var useMaterialYou by mutableStateOf(true)
     private var themeModeOption by mutableStateOf(ThemeModeOption.DARK)
     private var selectedVisualizer by mutableStateOf(VisualizerStyle.BARS)
+    private var visualizerEnabled by mutableStateOf(true)
+    private var lyricsLines by mutableStateOf<List<LyricsRepository.Line>>(emptyList())
+    private var showLyricsSheet by mutableStateOf(false)
+
+    
+    // Mood playlists
+    private val moodMap = mutableStateMapOf<String, String>()
+    private val moodKeys = listOf("Bass Heavy", "Energetic", "Chill", "Vocal")
+    private val moodIcons = mapOf(
+        "Bass Heavy" to "🔊",
+        "Energetic" to "⚡",
+        "Chill" to "🌊",
+        "Vocal" to "🎤"
+    )
     
     // Playback modifiers
     private var crossfadeEnabled by mutableStateOf(false)
@@ -463,6 +484,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         loadFavorites()
+        loadMoods()
+        loadBooks()
 
         val sessionToken = SessionToken(this, ComponentName(this, PlaybackService::class.java))
         controllerFuture = MediaController.Builder(this, sessionToken).buildAsync()
@@ -492,6 +515,7 @@ class MainActivity : ComponentActivity() {
         gaplessPlaybackEnabled = prefs.getBoolean("gapless_playback_enabled", true)
         crossfadeEnabled = prefs.getBoolean("crossfade_enabled", false)
         edgeLightingEnabled = prefs.getBoolean("edge_lighting_enabled", false)
+        visualizerEnabled = prefs.getBoolean("visualizer_enabled", true)
 
         requestAudioPermissions()
         wifiDirect = WifiDirectShareManager(applicationContext)
@@ -570,6 +594,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+            LaunchedEffect(isPlayingState, currentTrack) {
+                while (true) {
+                    delay(1000)
+                    if (isPlayingState) {
+                        currentTrack?.let { track ->
+                            analyzeAndSetMood(track.uri, PlaybackService.latestFftData)
+                        }
+                    }
+                }
+            }
+
             BackHandler(enabled = isFiltered || isSearchOpen || selectedPhotoItem != null) {
                 if (selectedPhotoItem != null) {
                     selectedPhotoItem = null
@@ -639,6 +674,13 @@ class MainActivity : ComponentActivity() {
                                                 tint = effectiveAccent
                                             )
                                         }
+                                        IconButton(onClick = { showLyricsSheet = true }) {
+                                            Icon(
+                                                imageVector = Icons.Default.Menu,
+                                                contentDescription = "Lyrics",
+                                                tint = if (lyricsLines.isNotEmpty()) effectiveAccent else subTextColor
+                                            )
+                                        }
                                         IconButton(onClick = { showSettingsDialog = true }) {
                                             Icon(
                                                 imageVector = Icons.Default.Settings,
@@ -696,12 +738,18 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
 
-                            val tabs = listOf("Songs", "Artists", "Genres", "Playlists", "Videos", "Photos", "Favorites", "About")
+                            val tabs = listOf("Songs", "Artists", "Genres", "Playlists", "Videos", "Photos", "Favorites", "Recent", "Moods", "Books", "About")
                             val pagerState = rememberPagerState(pageCount = { tabs.size })
                             val coroutineScope = rememberCoroutineScope()
+                            val tabListState = androidx.compose.foundation.lazy.rememberLazyListState()
 
+                            // Keep selected chip in view when swiping pages — no manual top-bar scroll
                             LaunchedEffect(pagerState.currentPage) {
                                 selectedTab = pagerState.currentPage
+                                tabListState.animateScrollToItem(
+                                    index = pagerState.currentPage,
+                                    scrollOffset = -80
+                                )
                             }
 
                             Surface(
@@ -713,10 +761,11 @@ class MainActivity : ComponentActivity() {
                                 shadowElevation = 2.dp
                             ) {
                                 androidx.compose.foundation.lazy.LazyRow(
+                                    state = tabListState,
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
                                     items(tabs.size) { index ->
                                         val isSelected = selectedTab == index
@@ -726,7 +775,10 @@ class MainActivity : ComponentActivity() {
                                         androidx.compose.material3.Surface(
                                             onClick = { 
                                                 selectedTab = index
-                                                coroutineScope.launch { pagerState.animateScrollToPage(index) }
+                                                coroutineScope.launch {
+                                                    pagerState.animateScrollToPage(index)
+                                                    tabListState.animateScrollToItem(index, scrollOffset = -80)
+                                                }
                                             },
                                             shape = RoundedCornerShape(12.dp),
                                             color = chipBg,
@@ -735,9 +787,9 @@ class MainActivity : ComponentActivity() {
                                             Text(
                                                 text = tabs[index],
                                                 color = chipTextColor,
-                                                fontSize = 13.sp,
+                                                fontSize = 12.sp,
                                                 fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Medium,
-                                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 7.dp)
                                             )
                                         }
                                     }
@@ -746,43 +798,38 @@ class MainActivity : ComponentActivity() {
 
                             Spacer(modifier = Modifier.height(6.dp))
 
-                            val filteredTracks = if (searchQuery.isBlank()) {
-                                displayTracks
-                            } else {
-                                displayTracks.filter { 
-                                    it.title.contains(searchQuery, ignoreCase = true) || 
+                            val filteredTracks = remember(searchQuery, displayTracks.size, displayTracks) {
+                                if (searchQuery.isBlank()) displayTracks.toList()
+                                else displayTracks.filter {
+                                    it.title.contains(searchQuery, ignoreCase = true) ||
                                     it.artist.contains(searchQuery, ignoreCase = true) ||
                                     it.genre.contains(searchQuery, ignoreCase = true)
                                 }
                             }
 
-                            val filteredArtists = if (searchQuery.isBlank()) {
-                                artistsList
-                            } else {
-                                artistsList.filter { it.contains(searchQuery, ignoreCase = true) }
+                            val filteredArtists = remember(searchQuery, artistsList.size) {
+                                if (searchQuery.isBlank()) artistsList.toList()
+                                else artistsList.filter { it.contains(searchQuery, ignoreCase = true) }
                             }
 
-                            val filteredGenres = if (searchQuery.isBlank()) {
-                                genresList
-                            } else {
-                                genresList.filter { it.contains(searchQuery, ignoreCase = true) }
+                            val filteredGenres = remember(searchQuery, genresList.size) {
+                                if (searchQuery.isBlank()) genresList.toList()
+                                else genresList.filter { it.contains(searchQuery, ignoreCase = true) }
                             }
 
-                            val filteredVideos = if (searchQuery.isBlank()) {
-                                videosList
-                            } else {
-                                videosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
+                            val filteredVideos = remember(searchQuery, videosList.size) {
+                                if (searchQuery.isBlank()) videosList.toList()
+                                else videosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
                             }
 
-                            val filteredPhotos = if (searchQuery.isBlank()) {
-                                photosList
-                            } else {
-                                photosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
+                            val filteredPhotos = remember(searchQuery, photosList.size) {
+                                if (searchQuery.isBlank()) photosList.toList()
+                                else photosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
                             }
 
                             HorizontalPager(
                                 state = pagerState,
-                                beyondBoundsPageCount = 3,
+                                beyondBoundsPageCount = 1,
                                 modifier = Modifier.weight(1f)
                             ) { page ->
                                 when (page) {
@@ -794,6 +841,8 @@ class MainActivity : ComponentActivity() {
                                         accentColor = effectiveAccent,
                                         currentTrack = currentTrack,
                                         favoriteUris = favoriteUris,
+                                        moodMap = moodMap,
+                                        moodIcons = moodIcons,
                                         onTrackSelect = { playTrack(it) },
                                         onTrackLongClick = { trackToAddToPlaylist = it },
                                         onToggleFavorite = { toggleFavorite(it.uri) },
@@ -892,7 +941,90 @@ class MainActivity : ComponentActivity() {
                                         onPhotoSelect = { selectedPhotoItem = it },
                                         onToggleFavorite = { toggleFavorite(it) }
                                     )
-                                    7 -> AboutView(themeAccent = effectiveAccent, cardBg = activeCardBg, textColor = textColor)
+                                    7 -> {
+                                        var recentTick by remember { mutableIntStateOf(0) }
+                                        LaunchedEffect(currentTrack) { recentTick++ }
+                                        val recentEntries = remember(recentTick) {
+                                            RecentlyPlayedStore.load(this@MainActivity)
+                                        }
+                                        RecentView(
+                                            entries = recentEntries,
+                                            cardBg = activeCardBg,
+                                            textColor = textColor,
+                                            subTextColor = subTextColor,
+                                            accentColor = effectiveAccent,
+                                            onPlay = { entry ->
+                                                val track = allTracks.find { it.uri.toString() == entry.uri }
+                                                if (track != null) playTrack(track)
+                                                else playTrack(
+                                                    MusicTrack(
+                                                        name = entry.title,
+                                                        title = entry.title,
+                                                        artist = entry.artist,
+                                                        genre = "Recent",
+                                                        uri = android.net.Uri.parse(entry.uri)
+                                                    )
+                                                )
+                                            },
+                                            onClear = {
+                                                RecentlyPlayedStore.clear(this@MainActivity)
+                                                recentTick++
+                                            }
+                                        )
+                                    }
+                                    8 -> MoodsView(
+                                        moodKeys = moodKeys,
+                                        moodMap = moodMap,
+                                        moodIcons = moodIcons,
+                                        allTracks = allTracks,
+                                        themeAccent = effectiveAccent,
+                                        cardBg = activeCardBg,
+                                        textColor = textColor,
+                                        onMoodClick = { moodName ->
+                                            displayTracks.clear()
+                                            displayTracks.addAll(allTracks.filter { moodMap[it.uri.toString()] == moodName })
+                                            isFiltered = true
+                                            activeFilterName = "Mood: $moodName"
+                                            selectedTab = 0
+                                            coroutineScope.launch { pagerState.animateScrollToPage(0) }
+                                        }
+                                    )
+                                    9 -> BooksView(
+                                        books = booksList,
+                                        themeAccent = effectiveAccent,
+                                        cardBg = activeCardBg,
+                                        textColor = textColor,
+                                        onEpubClick = { book ->
+                                            val intent = Intent(this@MainActivity, EpubReaderActivity::class.java).apply {
+                                                putExtra("EPUB_URI", book.contentUri.toString())
+                                            }
+                                            startActivity(intent)
+                                        },
+                                        onAudiobookClick = { book ->
+                                            val chapters = audiobookChapterMap[book.path] ?: emptyList()
+                                            if (chapters.isNotEmpty()) {
+                                                currentAudiobookChapters = chapters
+                                                currentAudiobookIndex = 0
+                                                val first = chapters[0]
+                                                val resumePrefs = getSharedPreferences("audiobook_resume", MODE_PRIVATE)
+                                                val resumePos = resumePrefs.getLong(book.path, 0L)
+                                                playTrack(
+                                                    MusicTrack(
+                                                        name = first.title,
+                                                        title = first.title,
+                                                        artist = book.title,
+                                                        genre = "Audiobook",
+                                                        uri = first.uri
+                                                    )
+                                                )
+                                                if (resumePos > 0) {
+                                                    player?.seekTo(resumePos)
+                                                }
+                                            }
+                                        },
+                                        onAddBook = { folderPicker.launch(null) }
+                                    )
+                                    10 -> AboutView(themeAccent = effectiveAccent, cardBg = activeCardBg, textColor = textColor)
                                 }
                             }
 
@@ -908,6 +1040,7 @@ class MainActivity : ComponentActivity() {
                                 subTextColor = subTextColor,
                                 accentColor = effectiveAccent,
                                 selectedVisualizer = selectedVisualizer,
+                                visualizerEnabled = visualizerEnabled,
                                 isSpinningArtEnabled = isSpinningArtEnabled,
                                 onToggleSpinningArt = { enabled ->
                                     isSpinningArtEnabled = enabled
@@ -965,7 +1098,9 @@ class MainActivity : ComponentActivity() {
                                         trackBookmarks.add(mark)
                                         trackBookmarks.sort()
                                     }
-                                }
+                                },
+                                onOpenLyrics = { showLyricsSheet = true },
+                                hasLyrics = lyricsLines.isNotEmpty()
                             )
                         }
 
@@ -981,6 +1116,41 @@ class MainActivity : ComponentActivity() {
                                     shareTargetName = photo.title
                                 },
                                 onToggleFavorite = { toggleFavorite(photo.contentUri) }
+                            )
+                        }
+
+                        if (showLyricsSheet) {
+                            val idx = LyricsRepository.lineAt(lyricsLines, currentPositionMs)
+                            AlertDialog(
+                                onDismissRequest = { showLyricsSheet = false },
+                                title = { Text("Lyrics", color = textColor) },
+                                text = {
+                                    if (lyricsLines.isEmpty()) {
+                                        Text(
+                                            "No .lrc file found for this track.\nPlace a file named SongName.lrc next to the audio.",
+                                            color = subTextColor
+                                        )
+                                    } else {
+                                        LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
+                                            items(lyricsLines.size) { i ->
+                                                val line = lyricsLines[i]
+                                                Text(
+                                                    line.text,
+                                                    color = if (i == idx) effectiveAccent else textColor,
+                                                    fontSize = if (i == idx) 16.sp else 13.sp,
+                                                    fontWeight = if (i == idx) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal,
+                                                    modifier = Modifier.padding(vertical = 4.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = { showLyricsSheet = false }) {
+                                        Text("Close", color = effectiveAccent)
+                                    }
+                                },
+                                containerColor = activeCardBg
                             )
                         }
 
@@ -1414,6 +1584,36 @@ class MainActivity : ComponentActivity() {
 
                                         item {
                                             Spacer(modifier = Modifier.height(12.dp))
+                                            Text("Visualizer", color = textColor, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                            Spacer(modifier = Modifier.height(4.dp))
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Show Music Visualizer", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("When off, album art expands to fill the space", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = visualizerEnabled,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = {
+                                                            visualizerEnabled = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("visualizer_enabled", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        item {
+                                            Spacer(modifier = Modifier.height(12.dp))
                                             Text("Playback & Timers", color = textColor, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                                             Spacer(modifier = Modifier.height(4.dp))
 
@@ -1437,6 +1637,31 @@ class MainActivity : ComponentActivity() {
                                                         onCheckedChange = { 
                                                             crossfadeEnabled = it 
                                                             getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("crossfade_enabled", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Gapless Playback", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Eliminate silence gaps between adjacent tracks", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = gaplessPlaybackEnabled,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = { 
+                                                            gaplessPlaybackEnabled = it 
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("gapless_playback_enabled", it).apply()
                                                         }
                                                     )
                                                 }
@@ -1714,6 +1939,62 @@ class MainActivity : ComponentActivity() {
         prefs.edit().putStringSet("favorite_uris", favoriteUris.toSet()).apply()
     }
 
+    private fun loadMoods() {
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        val json = prefs.getString("mood_map", null) ?: return
+        try {
+            val obj = JSONObject(json)
+            moodMap.clear()
+            obj.keys().forEach { key ->
+                moodMap[key] = obj.getString(key)
+            }
+        } catch (_: Exception) { }
+    }
+
+    private fun saveMoods() {
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        val obj = JSONObject()
+        moodMap.forEach { (k, v) -> obj.put(k, v) }
+        prefs.edit().putString("mood_map", obj.toString()).apply()
+    }
+
+    private fun analyzeAndSetMood(uri: Uri, fftData: FloatArray) {
+        if (fftData.size < 32) return
+        val bass = (fftData[0] + fftData[1] + fftData[2] + fftData[3]) / 4f
+        val mid = (fftData[8] + fftData[9] + fftData[10] + fftData[11] + fftData[12]) / 5f
+        val high = (fftData[20] + fftData[22] + fftData[24] + fftData[28]) / 4f
+        val energy = fftData.average().toFloat()
+        val mood = when {
+            bass > 0.65f && bass > mid * 1.3f -> "Bass Heavy"
+            energy > 0.55f && high > 0.4f -> "Energetic"
+            energy < 0.35f && mid < 0.4f -> "Chill"
+            mid > 0.45f && high > 0.3f -> "Vocal"
+            else -> return
+        }
+        val key = uri.toString()
+        if (moodMap[key] != mood) {
+            moodMap[key] = mood
+            saveMoods()
+        }
+    }
+
+    private fun loadBooks() {
+        GlobalScope.launch(Dispatchers.IO) {
+            val books = BookRepository.scanEpubFiles(this@MainActivity) +
+                BookRepository.scanAudiobookFolders(this@MainActivity)
+            withContext(Dispatchers.Main) {
+                booksList.clear()
+                booksList.addAll(books.distinctBy { it.contentUri.toString() })
+                booksList.filter { it.isAudiobook }.forEach { book ->
+                    val chapters = BookRepository.getAudiobookChapters(this@MainActivity, book.path)
+                    if (chapters.isNotEmpty()) {
+                        audiobookChapterMap[book.path] = chapters
+                    }
+                }
+            }
+        }
+    }
+
     private fun toggleFavorite(uri: Uri) {
         val str = uri.toString()
         if (favoriteUris.contains(str)) {
@@ -1842,6 +2123,8 @@ class MainActivity : ComponentActivity() {
         accentColor: Color,
         currentTrack: MusicTrack?,
         favoriteUris: Set<String>,
+        moodMap: Map<String, String> = emptyMap(),
+        moodIcons: Map<String, String> = emptyMap(),
         onTrackSelect: (MusicTrack) -> Unit,
         onTrackLongClick: (MusicTrack) -> Unit,
         onToggleFavorite: (MusicTrack) -> Unit,
@@ -1862,6 +2145,7 @@ class MainActivity : ComponentActivity() {
                 ) { track ->
                     val isCurrent = currentTrack == track
                     val isFav = favoriteUris.contains(track.uri.toString())
+                    val mood = moodMap[track.uri.toString()]
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -1894,9 +2178,30 @@ class MainActivity : ComponentActivity() {
                                     color = if (isCurrent) accentColor else textColor, 
                                     fontSize = 16.sp, 
                                     maxLines = 1,
-                                    fontWeight = if (isCurrent) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                    softWrap = false,
+                                    fontWeight = if (isCurrent) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal,
+                                    modifier = Modifier.fillMaxWidth().basicMarquee(iterations = Int.MAX_VALUE)
                                 )
-                                Text(text = "${track.artist} • ${track.genre}", color = subTextColor, fontSize = 12.sp, maxLines = 1)
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    if (mood != null) {
+                                        Text(
+                                            text = moodIcons[mood] ?: "🎵",
+                                            fontSize = 12.sp
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                    }
+                                    Text(
+                                        text = "${track.artist} • ${track.genre}",
+                                        color = subTextColor,
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        modifier = Modifier.weight(1f).basicMarquee(iterations = Int.MAX_VALUE)
+                                    )
+                                }
                             }
 
                             IconButton(onClick = { onToggleFavorite(track) }) {
@@ -2067,8 +2372,22 @@ class MainActivity : ComponentActivity() {
                                 AsyncAlbumArt(uri = track.uri, existing = track.artwork, accent = accentColor, sizeDp = 40)
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(track.title, color = textColor, fontSize = 15.sp, maxLines = 1)
-                                    Text(track.artist, color = subTextColor, fontSize = 12.sp, maxLines = 1)
+                                    Text(
+                                        track.title,
+                                        color = textColor,
+                                        fontSize = 15.sp,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        modifier = Modifier.fillMaxWidth().basicMarquee(iterations = Int.MAX_VALUE)
+                                    )
+                                    Text(
+                                        track.artist,
+                                        color = subTextColor,
+                                        fontSize = 12.sp,
+                                        maxLines = 1,
+                                        softWrap = false,
+                                        modifier = Modifier.fillMaxWidth().basicMarquee(iterations = Int.MAX_VALUE)
+                                    )
                                 }
                                 IconButton(onClick = { onToggleFavorite(track.uri) }) {
                                     Icon(Icons.Default.Favorite, contentDescription = "Unfavorite", tint = Color.Red, modifier = Modifier.size(20.dp))
@@ -2352,6 +2671,20 @@ class MainActivity : ComponentActivity() {
             .edit()
             .putLong(uri.toString(), positionMs)
             .apply()
+        // Also persist audiobook resume by folder path when genre is Audiobook
+        currentTrack?.let { track ->
+            if (track.genre.equals("Audiobook", ignoreCase = true)) {
+                val bookPath = audiobookChapterMap.entries.firstOrNull { entry ->
+                    entry.value.any { it.uri == track.uri }
+                }?.key
+                if (bookPath != null) {
+                    getSharedPreferences("audiobook_resume", MODE_PRIVATE)
+                        .edit()
+                        .putLong(bookPath, positionMs)
+                        .apply()
+                }
+            }
+        }
     }
 
     private fun loadPlaybackPosition(uri: Uri): Long {
@@ -2385,7 +2718,12 @@ class MainActivity : ComponentActivity() {
             if (currentPositionMs > 0) savePlaybackPosition(prev.uri, currentPositionMs)
         }
 
+        RecentlyPlayedStore.record(this, track.uri, track.title, track.artist)
         currentTrack = track
+        GlobalScope.launch(Dispatchers.IO) {
+            val lines = LyricsRepository.loadForUri(this@MainActivity, track.uri)
+            withContext(Dispatchers.Main) { lyricsLines = lines }
+        }
         trackBookmarks.clear()
         loopEnabled = false
         loopAMs = null
@@ -2487,6 +2825,7 @@ fun CurrentPlayerSection(
     subTextColor: Color,
     accentColor: Color,
     selectedVisualizer: VisualizerStyle,
+    visualizerEnabled: Boolean = true,
     isSpinningArtEnabled: Boolean,
     onToggleSpinningArt: (Boolean) -> Unit,
     gaplessPlaybackEnabled: Boolean,
@@ -2517,7 +2856,9 @@ fun CurrentPlayerSection(
     onSetSleep: (Int) -> Unit,
     onSetLoop: (Long?, Long?, Boolean) -> Unit,
     onClearBookmarks: () -> Unit,
-    onAddBookmark: (Long) -> Unit
+    onAddBookmark: (Long) -> Unit,
+    onOpenLyrics: () -> Unit = {},
+    hasLyrics: Boolean = false
 ) {
     currentTrack?.let { track ->
         var totalDragDistance by remember { mutableFloatStateOf(0f) }
@@ -2575,7 +2916,7 @@ fun CurrentPlayerSection(
                     }
                 }
 
-                if (!isPlayerMinimized) {
+                if (!isPlayerMinimized && visualizerEnabled) {
                     Spacer(modifier = Modifier.height(4.dp))
                     MainActivityInstanceHelper.MusicVisualizerViewInternal(
                         isPlaying = isPlayingState,
@@ -2600,24 +2941,40 @@ fun CurrentPlayerSection(
                         label = "rotation"
                     )
 
+                    val artSize = if (isPlayerMinimized) 36.dp else if (visualizerEnabled) 52.dp else 80.dp
+
                     Box(
                         modifier = Modifier
-                            .size(if (isPlayerMinimized) 36.dp else 52.dp)
+                            .size(artSize)
                             .rotate(if (isPlayingState && isSpinningArtEnabled) rotation else 0f)
                     ) {
                         AsyncAlbumArt(
                             uri = track.uri,
                             existing = track.artwork,
                             accent = accentColor,
-                            sizeDp = if (isPlayerMinimized) 36 else 52
+                            sizeDp = if (isPlayerMinimized) 36 else if (visualizerEnabled) 52 else 80
                         )
                     }
 
                     Spacer(modifier = Modifier.width(12.dp))
 
                     Column(modifier = Modifier.weight(1f)) {
-                        Text(track.title, color = textColor, fontSize = if (isPlayerMinimized) 14.sp else 16.sp, maxLines = 1)
-                        Text("${track.artist} • ${track.genre}", color = subTextColor, fontSize = 11.sp, maxLines = 1)
+                        Text(
+                            track.title,
+                            color = textColor,
+                            fontSize = if (isPlayerMinimized) 14.sp else 16.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            modifier = Modifier.fillMaxWidth().basicMarquee(iterations = Int.MAX_VALUE)
+                        )
+                        Text(
+                            "${track.artist} • ${track.genre}",
+                            color = subTextColor,
+                            fontSize = 11.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            modifier = Modifier.fillMaxWidth().basicMarquee(iterations = Int.MAX_VALUE)
+                        )
                     }
 
                     if (isPlayerMinimized) {
@@ -2722,11 +3079,17 @@ fun CurrentPlayerSection(
                     if (showAdvancedTools) {
                         Spacer(modifier = Modifier.height(6.dp))
                         Card(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(max = 320.dp),
                             colors = CardDefaults.cardColors(containerColor = activeCardBg),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Column(modifier = Modifier.padding(10.dp)) {
+                            Column(
+                                modifier = Modifier
+                                    .padding(10.dp)
+                                    .verticalScroll(rememberScrollState())
+                            ) {
                                 Text("A-B Segment Loop", color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Row(
@@ -2776,19 +3139,92 @@ fun CurrentPlayerSection(
                                 Divider(color = subTextColor.copy(alpha = 0.2f))
                                 Spacer(modifier = Modifier.height(6.dp))
 
-                                Row(
+                                // Sound Moments — unique feature: bookmark a feeling in the song
+                                val contextMoments = LocalContext.current
+                                var momentNote by remember { mutableStateOf("") }
+                                var showMomentDialog by remember { mutableStateOf(false) }
+                                var momentsTick by remember { mutableIntStateOf(0) }
+                                val trackMoments = remember(track.uri, momentsTick) {
+                                    SoundMomentsStore.load(contextMoments)
+                                        .filter { it.uri == track.uri.toString() }
+                                }
+
+                                Text("Sound Moments", color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                Text("Save this exact second with a note — jump back anytime", color = subTextColor, fontSize = 10.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                OutlinedButton(
+                                    onClick = { showMomentDialog = true },
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                                    shape = RoundedCornerShape(10.dp)
                                 ) {
-                                    Column(modifier = Modifier.weight(1f)) {
-                                        Text("Gapless Playback", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                                        Text("Eliminate silence gaps between adjacent tracks", color = subTextColor, fontSize = 10.sp)
+                                    Text("Capture moment @ ${formatTime(currentPositionMs)}", color = accentColor, fontSize = 12.sp)
+                                }
+                                if (trackMoments.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    trackMoments.take(5).forEach { moment ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable {
+                                                    onSeek(moment.positionMs)
+                                                }
+                                                .padding(vertical = 4.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Column(modifier = Modifier.weight(1f)) {
+                                                Text(moment.note, color = textColor, fontSize = 12.sp, maxLines = 1)
+                                                Text(formatTime(moment.positionMs), color = subTextColor, fontSize = 10.sp)
+                                            }
+                                            TextButton(onClick = {
+                                                SoundMomentsStore.remove(contextMoments, moment.id)
+                                                momentsTick++
+                                            }) {
+                                                Text("✕", color = Color.Gray, fontSize = 11.sp)
+                                            }
+                                        }
                                     }
-                                    Switch(
-                                        checked = gaplessPlaybackEnabled,
-                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = accentColor),
-                                        onCheckedChange = { onToggleGapless(it) }
+                                }
+                                if (showMomentDialog) {
+                                    AlertDialog(
+                                        onDismissRequest = { showMomentDialog = false },
+                                        title = { Text("Capture Sound Moment", color = textColor) },
+                                        text = {
+                                            Column {
+                                                Text("At ${formatTime(currentPositionMs)} in ${track.title}", color = subTextColor, fontSize = 12.sp)
+                                                Spacer(modifier = Modifier.height(8.dp))
+                                                OutlinedTextField(
+                                                    value = momentNote,
+                                                    onValueChange = { momentNote = it },
+                                                    placeholder = { Text("e.g. favorite verse, the drop…", color = subTextColor) },
+                                                    singleLine = true,
+                                                    modifier = Modifier.fillMaxWidth()
+                                                )
+                                            }
+                                        },
+                                        confirmButton = {
+                                            TextButton(onClick = {
+                                                SoundMomentsStore.add(
+                                                    contextMoments,
+                                                    track.uri,
+                                                    track.title,
+                                                    track.artist,
+                                                    currentPositionMs,
+                                                    momentNote
+                                                )
+                                                momentNote = ""
+                                                showMomentDialog = false
+                                                momentsTick++
+                                            }) {
+                                                Text("Save", color = accentColor)
+                                            }
+                                        },
+                                        dismissButton = {
+                                            TextButton(onClick = { showMomentDialog = false }) {
+                                                Text("Cancel", color = subTextColor)
+                                            }
+                                        },
+                                        containerColor = activeCardBg
                                     )
                                 }
 
@@ -2809,6 +3245,21 @@ fun CurrentPlayerSection(
                                     )
                                 }
 
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Divider(color = subTextColor.copy(alpha = 0.2f))
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                OutlinedButton(
+                                    onClick = onOpenLyrics,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(10.dp)
+                                ) {
+                                    Text(
+                                        if (hasLyrics) "Show Synced Lyrics" else "Lyrics (drop a .lrc next to the song)",
+                                        color = accentColor,
+                                        fontSize = 12.sp
+                                    )
+                                }
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Divider(color = subTextColor.copy(alpha = 0.2f))
                                 Spacer(modifier = Modifier.height(6.dp))
@@ -2850,6 +3301,12 @@ fun CurrentPlayerSection(
                                 Divider(color = subTextColor.copy(alpha = 0.2f))
                                 Spacer(modifier = Modifier.height(6.dp))
 
+                                // Local menu state so constant player recomposition doesn't kill the popup
+                                var localSpeedMenu by remember { mutableStateOf(false) }
+                                var localPitchMenu by remember { mutableStateOf(false) }
+                                fun formatRate(v: Float): String =
+                                    if (v == v.toLong().toFloat()) "${v.toLong()}x" else "${v}x"
+
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -2860,17 +3317,34 @@ fun CurrentPlayerSection(
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Box {
                                             OutlinedButton(
-                                                onClick = { onShowSpeedMenuChange(true) },
+                                                onClick = {
+                                                    localPitchMenu = false
+                                                    localSpeedMenu = !localSpeedMenu
+                                                },
                                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                                                 shape = RoundedCornerShape(8.dp)
                                             ) {
-                                                Text("${playbackSpeed}x", color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                Text(formatRate(playbackSpeed), color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                                             }
-                                            DropdownMenu(expanded = showSpeedMenu, onDismissRequest = { onShowSpeedMenuChange(false) }) {
+                                            DropdownMenu(
+                                                expanded = localSpeedMenu,
+                                                onDismissRequest = { localSpeedMenu = false },
+                                                modifier = Modifier.heightIn(max = 280.dp)
+                                            ) {
                                                 speedOptions.forEach { speed ->
+                                                    val selected = kotlin.math.abs(playbackSpeed - speed) < 0.001f
                                                     DropdownMenuItem(
-                                                        text = { Text("${speed}x", color = if (playbackSpeed == speed) accentColor else textColor) },
-                                                        onClick = { onSetSpeed(speed); onShowSpeedMenuChange(false) }
+                                                        text = {
+                                                            Text(
+                                                                formatRate(speed),
+                                                                color = if (selected) accentColor else textColor,
+                                                                fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                                            )
+                                                        },
+                                                        onClick = {
+                                                            onSetSpeed(speed)
+                                                            localSpeedMenu = false
+                                                        }
                                                     )
                                                 }
                                             }
@@ -2882,17 +3356,34 @@ fun CurrentPlayerSection(
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Box {
                                             OutlinedButton(
-                                                onClick = { onShowPitchMenuChange(true) },
+                                                onClick = {
+                                                    localSpeedMenu = false
+                                                    localPitchMenu = !localPitchMenu
+                                                },
                                                 contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp),
                                                 shape = RoundedCornerShape(8.dp)
                                             ) {
-                                                Text("${playbackPitch}x", color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                Text(formatRate(playbackPitch), color = accentColor, fontSize = 12.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                                             }
-                                            DropdownMenu(expanded = showPitchMenu, onDismissRequest = { onShowPitchMenuChange(false) }) {
+                                            DropdownMenu(
+                                                expanded = localPitchMenu,
+                                                onDismissRequest = { localPitchMenu = false },
+                                                modifier = Modifier.heightIn(max = 280.dp)
+                                            ) {
                                                 pitchOptions.forEach { pitch ->
+                                                    val selected = kotlin.math.abs(playbackPitch - pitch) < 0.001f
                                                     DropdownMenuItem(
-                                                        text = { Text("${pitch}x", color = if (playbackPitch == pitch) accentColor else textColor) },
-                                                        onClick = { onSetPitch(pitch); onShowPitchMenuChange(false) }
+                                                        text = {
+                                                            Text(
+                                                                formatRate(pitch),
+                                                                color = if (selected) accentColor else textColor,
+                                                                fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.Bold else androidx.compose.ui.text.font.FontWeight.Normal
+                                                            )
+                                                        },
+                                                        onClick = {
+                                                            onSetPitch(pitch)
+                                                            localPitchMenu = false
+                                                        }
                                                     )
                                                 }
                                             }
@@ -2956,12 +3447,15 @@ object MainActivityInstanceHelper {
                     val n = minOf(display.size, latest.size)
                     for (i in 0 until n) {
                         val target = latest[i]
-                        val k = if (target > display[i]) 0.72f else 0.18f
+                        // Rise with the hit, fall fast enough to leave gaps between beats
+                        val k = if (target > display[i]) 0.75f else 0.32f
                         display[i] += (target - display[i]) * k
                     }
-                    val bass = if (n > 2) (display[0] + display[1] + display[2]) / 3f else 0f
                     val pulse = PlaybackService.beatPulse
-                    beat += ((pulse * 0.85f + bass * 0.4f).coerceIn(0f, 1f) - beat) * 0.45f
+                    // Follow onsets tightly so every hit shows up
+                    val targetBeat = pulse.coerceIn(0f, 1f)
+                    val beatK = if (targetBeat > beat) 0.55f else 0.35f
+                    beat += (targetBeat - beat) * beatK
                     frameTick++
                 }
             }
@@ -2990,9 +3484,10 @@ object MainActivityInstanceHelper {
                     val bw = ((w - gap * (n - 1)) / n).coerceAtLeast(1.5f)
                     for (i in 0 until n) {
                         val amp = display[i % display.size]
-                        val boost = amp * (1f + beat * 0.5f * (1f - kotlin.math.abs(i - n / 2f) / (n / 2f)))
+                        // Spectrum height + shared beat pump on every bar
+                        val boost = (amp * 0.85f + beat * 0.35f + amp * beat * 0.25f).coerceIn(0.04f, 1.25f)
                         val bh = (h * boost).coerceAtLeast(2f)
-                        val alpha = (0.55f + amp * 0.45f).coerceIn(0f, 1f)
+                        val alpha = (0.5f + amp * 0.35f + beat * 0.2f).coerceIn(0f, 1f)
                         drawRect(
                             accentColor.copy(alpha = alpha),
                             Offset(i * (bw + gap), h - bh),
@@ -3381,6 +3876,44 @@ fun AudioEffectsSettingsSection(
         }
 
         if (eqEnabled) {
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("EQ Presets", color = textColor, fontSize = 14.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    androidx.compose.foundation.lazy.LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(EqPresets.all.size) { i ->
+                            val preset = EqPresets.all[i]
+                            OutlinedButton(
+                                onClick = {
+                                    EqPresets.apply(preset)
+                                    // Sync local slider state
+                                    for (b in preset.bands.indices) {
+                                        if (b < eqBands.size) {
+                                            eqBands[b] = preset.bands[b] / 100f
+                                        }
+                                    }
+                                    bassLevel = preset.bass / 1000f
+                                    virtLevel = preset.virtualizer / 1000f
+                                    gainLevel = preset.gainMb / 1000f
+                                },
+                                shape = RoundedCornerShape(20.dp),
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                            ) {
+                                Text(preset.name, color = accentColor, fontSize = 11.sp)
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             Card(
@@ -4024,6 +4557,175 @@ private fun PhotoThumb(uri: Uri, modifier: Modifier = Modifier) {
     } else {
         Box(modifier.background(Color.DarkGray), contentAlignment = Alignment.Center) {
             Text("…", color = Color.White)
+        }
+    }
+}
+
+@Composable
+fun RecentView(
+    entries: List<RecentlyPlayedStore.Entry>,
+    cardBg: Color,
+    textColor: Color,
+    subTextColor: Color,
+    accentColor: Color,
+    onPlay: (RecentlyPlayedStore.Entry) -> Unit,
+    onClear: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Recently Played", color = textColor, fontSize = 17.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            if (entries.isNotEmpty()) {
+                TextButton(onClick = onClear) {
+                    Text("Clear", color = accentColor)
+                }
+            }
+        }
+        if (entries.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Play some songs — history shows up here.", color = subTextColor)
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                items(entries, key = { it.uri + it.playedAt }) { entry ->
+                    Card(
+                        modifier = Modifier.fillMaxWidth().clickable { onPlay(entry) },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardBg)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = accentColor)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    entry.title,
+                                    color = textColor,
+                                    fontSize = 15.sp,
+                                    maxLines = 1,
+                                    softWrap = false,
+                                    modifier = Modifier.fillMaxWidth().basicMarquee(iterations = Int.MAX_VALUE)
+                                )
+                                Text(entry.artist, color = subTextColor, fontSize = 12.sp, maxLines = 1)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun MoodsView(
+    moodKeys: List<String>,
+    moodMap: Map<String, String>,
+    moodIcons: Map<String, String>,
+    allTracks: List<MusicTrack>,
+    themeAccent: Color,
+    cardBg: Color,
+    textColor: Color,
+    onMoodClick: (String) -> Unit
+) {
+    LazyColumn(
+        modifier = Modifier.fillMaxSize().padding(8.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            Text(
+                "Auto-detected moods while you listen",
+                color = textColor.copy(alpha = 0.7f),
+                fontSize = 13.sp,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+        items(moodKeys) { mood ->
+            val count = allTracks.count { moodMap[it.uri.toString()] == mood }
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onMoodClick(mood) },
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = cardBg)
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(moodIcons[mood] ?: "🎵", fontSize = 28.sp)
+                    Spacer(modifier = Modifier.width(14.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(mood, color = textColor, fontSize = 17.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                        Text("$count songs", color = themeAccent, fontSize = 13.sp)
+                    }
+                    Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = themeAccent)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BooksView(
+    books: List<BookItem>,
+    themeAccent: Color,
+    cardBg: Color,
+    textColor: Color,
+    onEpubClick: (BookItem) -> Unit,
+    onAudiobookClick: (BookItem) -> Unit,
+    onAddBook: () -> Unit
+) {
+    Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Books & Audiobooks", color = textColor, fontSize = 17.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            TextButton(onClick = onAddBook) {
+                Text("+ Add", color = themeAccent, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            }
+        }
+        if (books.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("No books found.\nAdd an EPUB or audiobook folder.", color = Color.Gray, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(books, key = { it.contentUri.toString() }) { book ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (book.isAudiobook) onAudiobookClick(book) else onEpubClick(book)
+                            },
+                        shape = RoundedCornerShape(14.dp),
+                        colors = CardDefaults.cardColors(containerColor = cardBg)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(if (book.isAudiobook) "🎧" else "📖", fontSize = 26.sp)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(book.title, color = textColor, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Medium, maxLines = 2)
+                                Text(
+                                    if (book.isAudiobook) "Audiobook" else "EPUB",
+                                    color = themeAccent,
+                                    fontSize = 12.sp
+                                )
+                            }
+                            Icon(Icons.Default.KeyboardArrowRight, contentDescription = null, tint = themeAccent)
+                        }
+                    }
+                }
+            }
         }
     }
 }

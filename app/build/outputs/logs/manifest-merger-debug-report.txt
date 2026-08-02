@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-71:12
-INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-71:12
-INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-71:12
-INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-71:12
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-76:12
+INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-76:12
+INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-76:12
+INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:2:1-76:12
 MERGED from [androidx.media3:media3-session:1.2.1] /home/cameron/.gradle/caches/transforms-3/5183579143f3d68207eb1f47f0b94262/transformed/media3-session-1.2.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.media3:media3-ui:1.2.1] /home/cameron/.gradle/caches/transforms-3/7790a1fa12bb5ff365d9bf8bf7ced20f/transformed/media3-ui-1.2.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.media3:media3-extractor:1.2.1] /home/cameron/.gradle/caches/transforms-3/f72a167f069692f02b79cc0fd2a8cd0c/transformed/media3-extractor-1.2.1/AndroidManifest.xml:17:1-22:12
@@ -147,8 +147,8 @@ ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:5-22:58
 	android:name
 		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:21:22-75
 application
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:24:5-70:19
-INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:24:5-70:19
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:24:5-75:19
+INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:24:5-75:19
 MERGED from [androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.emoji2:emoji2:1.4.0] /home/cameron/.gradle/caches/transforms-3/1fdec714b7c5ac721ecf524d81de4304/transformed/emoji2-1.4.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.core:core:1.12.0] /home/cameron/.gradle/caches/transforms-3/4dde0fce54f6341b6da19770f76a2130/transformed/core-1.12.0/AndroidManifest.xml:28:5-89
@@ -207,36 +207,44 @@ ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:43:9-47:73
 		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:47:13-70
 	android:name
 		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:44:13-48
+activity#com.medianexpo.player.EpubReaderActivity
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:49:9-52:73
+	android:exported
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:51:13-37
+	android:theme
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:52:13-70
+	android:name
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:50:13-47
 service#com.medianexpo.player.PlaybackService
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:49:9-56:19
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:54:9-61:19
 	android:exported
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:51:13-36
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:56:13-36
 	android:foregroundServiceType
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:52:13-58
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:57:13-58
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:50:13-44
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:55:13-44
 intent-filter#action:name:androidx.media3.session.MediaSessionService
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:53:13-55:29
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:58:13-60:29
 action#androidx.media3.session.MediaSessionService
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:54:17-86
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:59:17-86
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:54:25-83
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:59:25-83
 service#com.medianexpo.player.LocalShareService
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:59:9-62:56
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:64:9-67:56
 	android:exported
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:61:13-37
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:66:13-37
 	android:foregroundServiceType
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:62:13-53
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:67:13-53
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:60:13-46
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:65:13-46
 service#com.medianexpo.player.share.UniversalShareServer
-ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:65:9-68:56
+ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:70:9-73:56
 	android:exported
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:67:13-37
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:72:13-37
 	android:foregroundServiceType
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:68:13-53
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:73:13-53
 	android:name
-		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:66:13-55
+		ADDED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml:71:13-55
 uses-sdk
 INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /home/cameron/MediaNexpo/app/src/main/AndroidManifest.xml

@@ -26,6 +26,8 @@ class PlaybackService : MediaSessionService() {
     private var loudnessEnhancer: LoudnessEnhancer? = null
     private var currentSessionId: Int = C.AUDIO_SESSION_ID_UNSET
     private var prevBass = 0f
+    private val runningAvg = FloatArray(32)
+    private val history = mutableListOf<Float>()
 
     companion object {
         var instance: PlaybackService? = null
@@ -209,29 +211,45 @@ class PlaybackService : MediaSessionService() {
                             if (fft == null || !player.isPlaying) return
                             val bins = 32
                             val mags = FloatArray(bins)
-                            // Skip DC bin; sample spectrum with slight log bias toward lows
                             val usable = (fft.size / 2 - 2).coerceAtLeast(bins)
                             for (i in 0 until bins) {
                                 val src = 1 + (i * usable / bins)
                                 val reIdx = (2 * src).coerceIn(0, fft.size - 1)
                                 val imIdx = (2 * src + 1).coerceIn(0, fft.size - 1)
                                 val mag = hypot(fft[reIdx].toFloat(), fft[imIdx].toFloat())
-                                // Bass-heavy curve so kicks pop; highs still visible
-                                val weight = 1.35f - (i / bins.toFloat()) * 0.55f
-                                // Soft-knee normalize — more dynamic than flat /128
+                                val weight = 1.2f - (i / bins.toFloat()) * 0.35f
                                 val norm = (mag * weight / 90f).coerceIn(0f, 1.4f)
                                 mags[i] = (0.06f + norm * 0.94f).coerceIn(0.06f, 1f)
                             }
-                            // Beat pulse: rising edge of low-band energy
-                            val bass = (mags[0] + mags[1] + mags[2]) / 3f
-                            val rise = (bass - prevBass).coerceAtLeast(0f)
-                            prevBass = bass
-                            val pulse = (PlaybackService.beatPulse * 0.72f + rise * 3.2f + bass * 0.15f).coerceIn(0f, 1f)
+                            // Spectral flux across ALL bins = onsets anywhere in the mix
+                            // (kick, snare, hats, synth hits — not bass-only)
+                            var flux = 0f
+                            for (i in 0 until bins) {
+                                val d = mags[i] - runningAvg[i]
+                                if (d > 0f) flux += d
+                                // Slow envelope follow so flux measures true onsets
+                                runningAvg[i] = runningAvg[i] * 0.85f + mags[i] * 0.15f
+                            }
+                            flux /= bins
+                            val energy = mags.average().toFloat()
+                            // Short history for adaptive threshold
+                            history.add(flux)
+                            if (history.size > 20) history.removeAt(0)
+                            val mean = history.average().toFloat()
+                            val thr = mean * 1.25f + 0.02f
+                            val onset = if (flux > thr) ((flux - thr) / (thr + 0.05f)).coerceIn(0f, 1f) else 0f
+                            // Quick attack on onset, steady decay between hits
+                            val pulse = if (onset > 0.05f) {
+                                (PlaybackService.beatPulse * 0.4f + onset * 0.85f + energy * 0.1f).coerceIn(0f, 1f)
+                            } else {
+                                (PlaybackService.beatPulse * 0.82f + energy * 0.08f).coerceIn(0f, 1f)
+                            }
+                            prevBass = energy
                             PlaybackService.beatPulse = pulse
                             PlaybackService.latestFftData = mags
                         }
                     },
-                    Visualizer.getMaxCaptureRate() / 3,
+                    Visualizer.getMaxCaptureRate() / 2,
                     true,  // waveform for Lissajous
                     true   // fft
                 )
