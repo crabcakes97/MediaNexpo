@@ -23,7 +23,13 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+<<<<<<< HEAD
 import androidx.compose.foundation.background
+=======
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
@@ -33,6 +39,10 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+<<<<<<< HEAD
+=======
+import androidx.compose.foundation.lazy.rememberLazyListState
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -420,6 +430,22 @@ class MainActivity : ComponentActivity() {
     private var themeModeOption by mutableStateOf(ThemeModeOption.DARK)
     private var selectedVisualizer by mutableStateOf(VisualizerStyle.BARS)
     private var visualizerEnabled by mutableStateOf(true)
+<<<<<<< HEAD
+=======
+    private var keepScreenOn by mutableStateOf(false)
+    private var batterySaverViz by mutableStateOf(true)
+    private var resumeOnLaunch by mutableStateOf(true)
+    private var autoPlayOnLaunch by mutableStateOf(false)
+    private var rememberTrackPosition by mutableStateOf(true)
+    private var librarySort by mutableStateOf("title") // title | artist
+    private var playerStartMinimized by mutableStateOf(false)
+    private var lastTabIndex by mutableIntStateOf(0)
+    private var hapticFeedbackEnabled by mutableStateOf(true)
+    private var shakeToSkipEnabled by mutableStateOf(false)
+    private var autoMinimizeOnBrowse by mutableStateOf(false)
+    private val playNextQueue = mutableStateListOf<MusicTrack>()
+    private val folderBlacklist = mutableStateListOf<String>()
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
     private var lyricsLines by mutableStateOf<List<LyricsRepository.Line>>(emptyList())
     private var showLyricsSheet by mutableStateOf(false)
 
@@ -428,10 +454,17 @@ class MainActivity : ComponentActivity() {
     private val moodMap = mutableStateMapOf<String, String>()
     private val moodKeys = listOf("Bass Heavy", "Energetic", "Chill", "Vocal")
     private val moodIcons = mapOf(
+<<<<<<< HEAD
         "Bass Heavy" to "🔊",
         "Energetic" to "⚡",
         "Chill" to "🌊",
         "Vocal" to "🎤"
+=======
+        "Bass Heavy" to "BASS",
+        "Energetic" to "NRG",
+        "Chill" to "CHILL",
+        "Vocal" to "VOX"
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
     )
     
     // Playback modifiers
@@ -471,6 +504,26 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+<<<<<<< HEAD
+=======
+    private val epubPicker = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            try {
+                contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {}
+            val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+            val existing = prefs.getStringSet("manual_epubs", emptySet())?.toMutableSet() ?: mutableSetOf()
+            existing.add(uri.toString())
+            prefs.edit().putStringSet("manual_epubs", existing).apply()
+            loadBooks()
+            android.widget.Toast.makeText(this, "EPUB added", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
     private val folderPicker = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         uri?.let {
             contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -516,6 +569,23 @@ class MainActivity : ComponentActivity() {
         crossfadeEnabled = prefs.getBoolean("crossfade_enabled", false)
         edgeLightingEnabled = prefs.getBoolean("edge_lighting_enabled", false)
         visualizerEnabled = prefs.getBoolean("visualizer_enabled", true)
+<<<<<<< HEAD
+=======
+        keepScreenOn = prefs.getBoolean("keep_screen_on", false)
+        resumeOnLaunch = prefs.getBoolean("resume_on_launch", true)
+        autoPlayOnLaunch = prefs.getBoolean("auto_play_on_launch", false)
+        rememberTrackPosition = prefs.getBoolean("remember_track_position", true)
+        librarySort = prefs.getString("library_sort", "title") ?: "title"
+        playerStartMinimized = prefs.getBoolean("player_start_minimized", false)
+        lastTabIndex = prefs.getInt("last_tab_index", 0)
+        hapticFeedbackEnabled = prefs.getBoolean("haptic_feedback", true)
+        shakeToSkipEnabled = prefs.getBoolean("shake_to_skip", false)
+        autoMinimizeOnBrowse = prefs.getBoolean("auto_minimize_on_browse", true)
+        batterySaverViz = prefs.getBoolean("battery_saver_viz", true)
+        folderBlacklist.clear()
+        prefs.getString("folder_blacklist", null)?.split("|")?.filter { it.isNotBlank() }?.let { folderBlacklist.addAll(it) }
+        isPlayerMinimized = playerStartMinimized
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 
         requestAudioPermissions()
         wifiDirect = WifiDirectShareManager(applicationContext)
@@ -525,7 +595,11 @@ class MainActivity : ComponentActivity() {
             var saveCounter by remember { mutableIntStateOf(0) }
             var volumeSetByCrossfade by remember { mutableStateOf(false) }
 
+<<<<<<< HEAD
             LaunchedEffect(Unit) {
+=======
+            LaunchedEffect(isPlayerMinimized, loopEnabled, crossfadeEnabled) {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 while (true) {
                     val p = player
                     if (p != null) {
@@ -557,14 +631,23 @@ class MainActivity : ComponentActivity() {
                         }
 
                         saveCounter++
+<<<<<<< HEAD
                         if (saveCounter >= 20) {
+=======
+                        if (saveCounter >= 25) {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                             saveCounter = 0
                             if (p.isPlaying) {
                                 currentTrack?.let { savePlaybackPosition(it.uri, currentPositionMs) }
                             }
                         }
                     }
+<<<<<<< HEAD
                     delay(200)
+=======
+                    // Poll less often when minimized — big lag win on tab swipes
+                    delay(if (isPlayerMinimized) 500 else 250)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 }
             }
 
@@ -622,17 +705,21 @@ class MainActivity : ComponentActivity() {
                 ThemeModeOption.SYSTEM -> androidx.compose.foundation.isSystemInDarkTheme()
             }
 
+<<<<<<< HEAD
             val activeBg = if (isDarkTheme) currentTheme.darkBg else currentTheme.lightBg
             val activeCardBg = if (isDarkTheme) currentTheme.darkCardBg else currentTheme.lightCardBg
             val textColor = if (isDarkTheme) Color.White else Color.Black
             val subTextColor = if (isDarkTheme) Color.LightGray else Color.DarkGray
 
+=======
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
             val dynamicColorScheme = when {
                 useMaterialYou && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
                     if (isDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
                 }
                 else -> null
             }
+<<<<<<< HEAD
             val dynamicAccent = dynamicColorScheme?.primary ?: currentTheme.accent
             val effectiveAccent = if (useMaterialYou) dynamicAccent else currentTheme.accent
 
@@ -640,14 +727,88 @@ class MainActivity : ComponentActivity() {
 
             MaterialTheme(colorScheme = appColorScheme) {
                 Box(modifier = Modifier.fillMaxSize()) {
+=======
+
+            // Material You: entire chrome follows system wallpaper colors (pink accent, etc.)
+            val effectiveAccent = dynamicColorScheme?.primary ?: currentTheme.accent
+            val activeBg = dynamicColorScheme?.background
+                ?: if (isDarkTheme) currentTheme.darkBg else currentTheme.lightBg
+            // Prefer surfaceContainer for cards when available (API 34+ scheme fields via surface)
+            val activeCardBg = dynamicColorScheme?.surfaceVariant
+                ?: dynamicColorScheme?.surface
+                ?: if (isDarkTheme) currentTheme.darkCardBg else currentTheme.lightCardBg
+            val textColor = dynamicColorScheme?.onBackground
+                ?: if (isDarkTheme) Color.White else Color.Black
+            val subTextColor = dynamicColorScheme?.onSurfaceVariant
+                ?: if (isDarkTheme) Color.LightGray else Color.DarkGray
+            // On-accent for text on primary buttons
+            val onAccent = dynamicColorScheme?.onPrimary
+                ?: Color.Black
+
+            val appColorScheme = dynamicColorScheme ?: if (isDarkTheme) {
+                darkColorScheme(
+                    background = activeBg,
+                    surface = activeCardBg,
+                    primary = effectiveAccent,
+                    onPrimary = onAccent,
+                    secondary = effectiveAccent,
+                    surfaceVariant = activeCardBg
+                )
+            } else {
+                lightColorScheme(
+                    background = activeBg,
+                    surface = activeCardBg,
+                    primary = effectiveAccent,
+                    onPrimary = onAccent,
+                    secondary = effectiveAccent,
+                    surfaceVariant = activeCardBg
+                )
+            }
+
+
+            // Auto-dim visualizer on low battery (power users notice this)
+            LaunchedEffect(batterySaverViz) {
+                if (!batterySaverViz) return@LaunchedEffect
+                while (true) {
+                    try {
+                        val bm = getSystemService(BATTERY_SERVICE) as android.os.BatteryManager
+                        val pct = bm.getIntProperty(android.os.BatteryManager.BATTERY_PROPERTY_CAPACITY)
+                        if (pct in 1..14 && visualizerEnabled) {
+                            visualizerEnabled = false
+                        }
+                    } catch (_: Exception) {}
+                    kotlinx.coroutines.delay(60_000)
+                }
+            }
+
+            MaterialTheme(colorScheme = appColorScheme) {
+                Box(modifier = Modifier.fillMaxSize()) {
+                    // Keep screen awake while music plays if enabled
+                    androidx.compose.runtime.SideEffect {
+                        val window = window
+                        if (keepScreenOn && isPlayingState) {
+                            window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        } else {
+                            window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+                        }
+                    }
+
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                     Surface(modifier = Modifier.fillMaxSize(), color = activeBg) {
                         Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
                             
                             Surface(
                                 modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+<<<<<<< HEAD
                                 shape = RoundedCornerShape(16.dp),
                                 color = activeCardBg,
                                 shadowElevation = 4.dp
+=======
+                                shape = RoundedCornerShape(24.dp),
+                                color = activeCardBg,
+                                shadowElevation = 2.dp,
+                                tonalElevation = 2.dp
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -738,18 +899,35 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
 
+<<<<<<< HEAD
                             val tabs = listOf("Songs", "Artists", "Genres", "Playlists", "Videos", "Photos", "Favorites", "Recent", "Moods", "Books", "About")
                             val pagerState = rememberPagerState(pageCount = { tabs.size })
+=======
+                            val tabs = listOf("Songs", "Artists", "Genres", "Playlists", "Videos", "Photos", "Favorites", "Recent", "Moods", "Books", "Vault", "About")
+                            val pagerState = rememberPagerState(initialPage = lastTabIndex.coerceIn(0, tabs.size - 1), pageCount = { tabs.size })
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                             val coroutineScope = rememberCoroutineScope()
                             val tabListState = androidx.compose.foundation.lazy.rememberLazyListState()
 
                             // Keep selected chip in view when swiping pages — no manual top-bar scroll
                             LaunchedEffect(pagerState.currentPage) {
                                 selectedTab = pagerState.currentPage
+<<<<<<< HEAD
                                 tabListState.animateScrollToItem(
                                     index = pagerState.currentPage,
                                     scrollOffset = -80
                                 )
+=======
+                                tabListState.animateScrollToItem(pagerState.currentPage)
+                                lastTabIndex = pagerState.currentPage
+                                getSharedPreferences("prefs", MODE_PRIVATE).edit().putInt("last_tab_index", lastTabIndex).apply()
+                                if (autoMinimizeOnBrowse && !isPlayerMinimized) {
+                                    isPlayerMinimized = true
+                                }
+                                if (pagerState.currentPage == 9) {
+                                    loadBooks()
+                                }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                             }
 
                             Surface(
@@ -770,7 +948,11 @@ class MainActivity : ComponentActivity() {
                                     items(tabs.size) { index ->
                                         val isSelected = selectedTab == index
                                         val chipBg = if (isSelected) effectiveAccent else Color.Transparent
+<<<<<<< HEAD
                                         val chipTextColor = if (isSelected) Color.Black else textColor
+=======
+                                        val chipTextColor = if (isSelected) onAccent else textColor
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 
                                         androidx.compose.material3.Surface(
                                             onClick = { 
@@ -798,9 +980,21 @@ class MainActivity : ComponentActivity() {
 
                             Spacer(modifier = Modifier.height(6.dp))
 
+<<<<<<< HEAD
                             val filteredTracks = remember(searchQuery, displayTracks.size, displayTracks) {
                                 if (searchQuery.isBlank()) displayTracks.toList()
                                 else displayTracks.filter {
+=======
+                            val vaultUnlocked = PrivateVaultStore.isUnlocked(this@MainActivity)
+                            val vaultHidden = remember(vaultUnlocked, pagerState.currentPage) {
+                                if (vaultUnlocked) emptySet()
+                                else PrivateVaultStore.uris(this@MainActivity)
+                            }
+                            val filteredTracks = remember(searchQuery, displayTracks.size, displayTracks, vaultHidden) {
+                                val base = displayTracks.filter { it.uri.toString() !in vaultHidden }
+                                if (searchQuery.isBlank()) base
+                                else base.filter {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                     it.title.contains(searchQuery, ignoreCase = true) ||
                                     it.artist.contains(searchQuery, ignoreCase = true) ||
                                     it.genre.contains(searchQuery, ignoreCase = true)
@@ -817,6 +1011,7 @@ class MainActivity : ComponentActivity() {
                                 else genresList.filter { it.contains(searchQuery, ignoreCase = true) }
                             }
 
+<<<<<<< HEAD
                             val filteredVideos = remember(searchQuery, videosList.size) {
                                 if (searchQuery.isBlank()) videosList.toList()
                                 else videosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
@@ -825,11 +1020,27 @@ class MainActivity : ComponentActivity() {
                             val filteredPhotos = remember(searchQuery, photosList.size) {
                                 if (searchQuery.isBlank()) photosList.toList()
                                 else photosList.filter { it.title.contains(searchQuery, ignoreCase = true) }
+=======
+                            val filteredVideos = remember(searchQuery, videosList.size, videosList, vaultHidden) {
+                                val base = videosList.filter { it.contentUri.toString() !in vaultHidden }
+                                if (searchQuery.isBlank()) base
+                                else base.filter { it.title.contains(searchQuery, ignoreCase = true) }
+                            }
+
+                            val filteredPhotos = remember(searchQuery, photosList.size, photosList, vaultHidden) {
+                                val base = photosList.filter { it.contentUri.toString() !in vaultHidden }
+                                if (searchQuery.isBlank()) base
+                                else base.filter { it.title.contains(searchQuery, ignoreCase = true) }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                             }
 
                             HorizontalPager(
                                 state = pagerState,
+<<<<<<< HEAD
                                 beyondBoundsPageCount = 1,
+=======
+                                beyondBoundsPageCount = 0,
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                 modifier = Modifier.weight(1f)
                             ) { page ->
                                 when (page) {
@@ -849,6 +1060,14 @@ class MainActivity : ComponentActivity() {
                                         onEditTrack = { track ->
                                             trackToEdit = track
                                             showTagEditorDialog = true
+<<<<<<< HEAD
+=======
+                                        },
+                                        onScrollMinimize = {
+                                            if (autoMinimizeOnBrowse && !isPlayerMinimized) {
+                                                isPlayerMinimized = true
+                                            }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                         }
                                     )
                                     1 -> ArtistList(
@@ -898,6 +1117,10 @@ class MainActivity : ComponentActivity() {
                                             player?.pause()
                                             val intent = Intent(this@MainActivity, VideoPlayerActivity::class.java).apply {
                                                 putExtra("EXTRA_VIDEO_URI", video.contentUri.toString())
+<<<<<<< HEAD
+=======
+                                                putExtra("EXTRA_VIDEO_TITLE", video.title)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                             }
                                             startActivity(intent)
                                         },
@@ -935,6 +1158,10 @@ class MainActivity : ComponentActivity() {
                                             player?.pause()
                                             val intent = Intent(this@MainActivity, VideoPlayerActivity::class.java).apply {
                                                 putExtra("EXTRA_VIDEO_URI", video.contentUri.toString())
+<<<<<<< HEAD
+=======
+                                                putExtra("EXTRA_VIDEO_TITLE", video.title)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                             }
                                             startActivity(intent)
                                         },
@@ -1022,9 +1249,38 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             }
                                         },
+<<<<<<< HEAD
                                         onAddBook = { folderPicker.launch(null) }
                                     )
                                     10 -> AboutView(themeAccent = effectiveAccent, cardBg = activeCardBg, textColor = textColor)
+=======
+                                        onAddBook = { loadBooks() },
+                                        onPickEpub = {
+                                            epubPicker.launch(arrayOf("application/epub+zip", "application/octet-stream", "*/*"))
+                                        }
+                                    )
+                                    10 -> VaultView(
+                                        context = this@MainActivity,
+                                        allTracks = allTracks.toList(),
+                                        allVideos = videosList.toList(),
+                                        allPhotos = photosList.toList(),
+                                        cardBg = activeCardBg,
+                                        textColor = textColor,
+                                        subTextColor = subTextColor,
+                                        accentColor = effectiveAccent,
+                                        onPlay = { playTrack(it) },
+                                        onOpenVideo = { video ->
+                                            player?.pause()
+                                            val intent = Intent(this@MainActivity, VideoPlayerActivity::class.java).apply {
+                                                putExtra("EXTRA_VIDEO_URI", video.contentUri.toString())
+                                                putExtra("EXTRA_VIDEO_TITLE", video.title)
+                                            }
+                                            startActivity(intent)
+                                        },
+                                        onOpenPhoto = { selectedPhotoItem = it }
+                                    )
+                                    11 -> AboutView(themeAccent = effectiveAccent, cardBg = activeCardBg, textColor = textColor)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                 }
                             }
 
@@ -1067,10 +1323,18 @@ class MainActivity : ComponentActivity() {
                                 loopBMs = loopBMs,
                                 trackBookmarks = trackBookmarks,
                                 onSeek = { seekTarget ->
+<<<<<<< HEAD
+=======
+                                    hapticTick()
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                     player?.seekTo(seekTarget)
                                     currentPositionMs = seekTarget
                                 },
                                 onPlayPause = {
+<<<<<<< HEAD
+=======
+                                    hapticTick()
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                     player?.let {
                                         if (it.isPlaying) {
                                             currentTrack?.let { t -> savePlaybackPosition(t.uri, currentPositionMs) }
@@ -1080,8 +1344,19 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 },
+<<<<<<< HEAD
                                 onPrevious = { player?.let { if (it.hasPreviousMediaItem()) it.seekToPrevious() } },
                                 onNext = { player?.let { if (it.hasNextMediaItem()) it.seekToNext() } },
+=======
+                                onPrevious = {
+                                    hapticTick()
+                                    player?.let { if (it.hasPreviousMediaItem()) it.seekToPrevious() }
+                                },
+                                onNext = {
+                                    hapticTick()
+                                    player?.let { if (it.hasNextMediaItem()) it.seekToNext() }
+                                },
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                 onToggleShuffle = { toggleShuffle() },
                                 onCycleRepeat = { cycleRepeatMode() },
                                 onSetSpeed = { setSpeed(it) },
@@ -1105,6 +1380,7 @@ class MainActivity : ComponentActivity() {
                         }
 
                         selectedPhotoItem?.let { photo ->
+<<<<<<< HEAD
                             FullscreenImageView(
                                 uri = photo.contentUri,
                                 title = photo.title,
@@ -1116,6 +1392,21 @@ class MainActivity : ComponentActivity() {
                                     shareTargetName = photo.title
                                 },
                                 onToggleFavorite = { toggleFavorite(photo.contentUri) }
+=======
+                            val albumPhotos = photosList.toList().ifEmpty { listOf(photo) }
+                            val startIdx = albumPhotos.indexOfFirst { it.contentUri == photo.contentUri }.coerceAtLeast(0)
+                            FullscreenImageView(
+                                photos = albumPhotos,
+                                initialIndex = startIdx,
+                                accentColor = effectiveAccent,
+                                favoriteUris = favoriteUris,
+                                onDismiss = { selectedPhotoItem = null },
+                                onShare = { p ->
+                                    shareTargetUri = p.contentUri
+                                    shareTargetName = p.title
+                                },
+                                onToggleFavorite = { p -> toggleFavorite(p.contentUri) }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                             )
                         }
 
@@ -1299,7 +1590,18 @@ class MainActivity : ComponentActivity() {
                                         ) {
                                             Text(if (wifiDirect.isActive) "Share Direct" else "Share LAN", color = Color.Black)
                                         }
+<<<<<<< HEAD
                                         Spacer(modifier = Modifier.width(8.dp))
+=======
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        TextButton(onClick = {
+                                            PrivateVaultStore.add(this@MainActivity, uri)
+                                            shareTargetUri = null
+                                            android.widget.Toast.makeText(this@MainActivity, "Added to Vault", android.widget.Toast.LENGTH_SHORT).show()
+                                        }) {
+                                            Text("Vault", color = effectiveAccent)
+                                        }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                         TextButton(onClick = { shareTargetUri = null }) {
                                             Text("Cancel", color = textColor)
                                         }
@@ -1390,8 +1692,28 @@ class MainActivity : ComponentActivity() {
                                     }
                                 },
                                 dismissButton = {
+<<<<<<< HEAD
                                     TextButton(onClick = { trackToAddToPlaylist = null }) {
                                         Text("Cancel", color = subTextColor)
+=======
+                                    Row {
+                                        TextButton(onClick = {
+                                            enqueuePlayNext(track)
+                                            trackToAddToPlaylist = null
+                                        }) {
+                                            Text("Play Next", color = effectiveAccent)
+                                        }
+                                        TextButton(onClick = {
+                                            PrivateVaultStore.add(this@MainActivity, track.uri)
+                                            trackToAddToPlaylist = null
+                                            android.widget.Toast.makeText(this@MainActivity, "Added to Vault", android.widget.Toast.LENGTH_SHORT).show()
+                                        }) {
+                                            Text("Vault", color = effectiveAccent)
+                                        }
+                                        TextButton(onClick = { trackToAddToPlaylist = null }) {
+                                            Text("Cancel", color = subTextColor)
+                                        }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                     }
                                 },
                                 containerColor = activeCardBg
@@ -1413,10 +1735,17 @@ class MainActivity : ComponentActivity() {
                                                     startDeepLibraryScan(uri)
                                                 },
                                                 modifier = Modifier.fillMaxWidth(),
+<<<<<<< HEAD
                                                 colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
                                                 shape = RoundedCornerShape(12.dp)
                                             ) {
                                                 Text("Rescan Media Library", color = Color.Black)
+=======
+                                                colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent, contentColor = onAccent),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Text("Rescan Media Library", color = onAccent)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                             }
 
                                             Spacer(modifier = Modifier.height(12.dp))
@@ -1662,6 +1991,10 @@ class MainActivity : ComponentActivity() {
                                                         onCheckedChange = { 
                                                             gaplessPlaybackEnabled = it 
                                                             getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("gapless_playback_enabled", it).apply()
+<<<<<<< HEAD
+=======
+                                                            try { (player as? androidx.media3.exoplayer.ExoPlayer)?.skipSilenceEnabled = it } catch (_: Exception) {}
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                                         }
                                                     )
                                                 }
@@ -1717,6 +2050,209 @@ class MainActivity : ComponentActivity() {
                                                 }
                                             }
 
+<<<<<<< HEAD
+=======
+
+                                            // —— Must-have library / session ——
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Resume last song", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Restore the track you left off on open", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = resumeOnLaunch,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = {
+                                                            resumeOnLaunch = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("resume_on_launch", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Auto-play on open", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Start playing the resumed track automatically", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = autoPlayOnLaunch,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = {
+                                                            autoPlayOnLaunch = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("auto_play_on_launch", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Remember position in songs", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Continue where you left off inside a track", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = rememberTrackPosition,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = {
+                                                            rememberTrackPosition = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("remember_track_position", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Start with player minimized", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Open the app with the mini player bar", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = playerStartMinimized,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = {
+                                                            playerStartMinimized = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("player_start_minimized", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Column(modifier = Modifier.padding(12.dp)) {
+                                                    Text("Library sort", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                    Text("How Songs is ordered after a scan", color = subTextColor, fontSize = 10.sp)
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                        listOf("title" to "Title A–Z", "artist" to "Artist").forEach { (key, label) ->
+                                                            val sel = librarySort == key
+                                                            Button(
+                                                                onClick = {
+                                                                    librarySort = key
+                                                                    getSharedPreferences("prefs", MODE_PRIVATE).edit().putString("library_sort", key).apply()
+                                                                    displayTracks.clear()
+                                                                    displayTracks.addAll(sortLibraryTracks(allTracks.toList()))
+                                                                },
+                                                                shape = RoundedCornerShape(20.dp),
+                                                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                                                colors = ButtonDefaults.buttonColors(
+                                                                    containerColor = if (sel) effectiveAccent else effectiveAccent.copy(alpha = 0.12f),
+                                                                    contentColor = if (sel) Color.Black else effectiveAccent
+                                                                )
+                                                            ) {
+                                                                Text(label, fontSize = 12.sp)
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Clear recently played", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Wipe the Recent tab history", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    OutlinedButton(
+                                                        onClick = {
+                                                            RecentlyPlayedStore.clear(this@MainActivity)
+                                                            android.widget.Toast.makeText(this@MainActivity, "Recent cleared", android.widget.Toast.LENGTH_SHORT).show()
+                                                        },
+                                                        border = BorderStroke(1.dp, effectiveAccent.copy(alpha = 0.6f)),
+                                                        shape = RoundedCornerShape(12.dp)
+                                                    ) {
+                                                        Text("Clear", color = effectiveAccent, fontSize = 12.sp)
+                                                    }
+                                                }
+                                            }
+
+                                            Spacer(modifier = Modifier.height(12.dp))
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Column(modifier = Modifier.padding(12.dp)) {
+                                                    Text("Folder blacklist", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                    Text("Paths containing these names are skipped on scan (comma-separated)", color = subTextColor, fontSize = 10.sp)
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    var blText by remember { mutableStateOf(folderBlacklist.joinToString(", ")) }
+                                                    OutlinedTextField(
+                                                        value = blText,
+                                                        onValueChange = { blText = it },
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        singleLine = true,
+                                                        placeholder = { Text("e.g. WhatsApp, Ringtones, Notifications") }
+                                                    )
+                                                    Spacer(modifier = Modifier.height(6.dp))
+                                                    OutlinedButton(
+                                                        onClick = {
+                                                            folderBlacklist.clear()
+                                                            folderBlacklist.addAll(
+                                                                blText.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                                                            )
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit()
+                                                                .putString("folder_blacklist", folderBlacklist.joinToString("|"))
+                                                                .apply()
+                                                            android.widget.Toast.makeText(this@MainActivity, "Blacklist saved — rescan to apply", android.widget.Toast.LENGTH_SHORT).show()
+                                                        },
+                                                        border = BorderStroke(1.dp, effectiveAccent.copy(alpha = 0.6f)),
+                                                        shape = RoundedCornerShape(12.dp)
+                                                    ) {
+                                                        Text("Save blacklist", color = effectiveAccent, fontSize = 12.sp)
+                                                    }
+                                                }
+                                            }
+
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                             Spacer(modifier = Modifier.height(12.dp))
                                             Text("Cool Extras", color = textColor, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                                             Spacer(modifier = Modifier.height(4.dp))
@@ -1732,6 +2268,155 @@ class MainActivity : ComponentActivity() {
                                                     verticalAlignment = Alignment.CenterVertically
                                                 ) {
                                                     Column(modifier = Modifier.weight(1f)) {
+<<<<<<< HEAD
+=======
+                                                        Text("Keep Screen On While Playing", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Useful in the car or at a party", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = keepScreenOn,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = { 
+                                                            keepScreenOn = it 
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("keep_screen_on", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Haptic feedback", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Light vibration on play, skip, and seek", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = hapticFeedbackEnabled,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = {
+                                                            hapticFeedbackEnabled = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("haptic_feedback", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Shake to skip", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Shake the phone to jump to the next track", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = shakeToSkipEnabled,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = {
+                                                            shakeToSkipEnabled = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("shake_to_skip", it).apply()
+                                                            if (it) registerShake() else unregisterShake()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Column(modifier = Modifier.padding(12.dp)) {
+                                                    Text("Quick Settings tile", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                    Text("On Android 13+ the system needs a one-time add prompt (Motorola too).", color = subTextColor, fontSize = 10.sp)
+                                                    Spacer(modifier = Modifier.height(8.dp))
+                                                    Button(
+                                                        onClick = { requestQsTile() },
+                                                        colors = ButtonDefaults.buttonColors(containerColor = effectiveAccent),
+                                                        shape = RoundedCornerShape(12.dp),
+                                                        modifier = Modifier.fillMaxWidth()
+                                                    ) {
+                                                        Text("Add play/pause tile", color = Color.Black, fontSize = 13.sp)
+                                                    }
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Auto-minimize when browsing", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Collapse Now Playing when you change tabs", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = autoMinimizeOnBrowse,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = {
+                                                            autoMinimizeOnBrowse = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("auto_minimize_on_browse", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+                                                        Text("Battery saver visualizer", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                                                        Text("Turn the visualizer off under 15% battery", color = subTextColor, fontSize = 10.sp)
+                                                    }
+                                                    Switch(
+                                                        checked = batterySaverViz,
+                                                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = effectiveAccent),
+                                                        onCheckedChange = {
+                                                            batterySaverViz = it
+                                                            getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("battery_saver_viz", it).apply()
+                                                        }
+                                                    )
+                                                }
+                                            }
+
+                                            Card(
+                                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                                colors = CardDefaults.cardColors(containerColor = activeCardBg),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ) {
+                                                Row(
+                                                    modifier = Modifier.fillMaxWidth().padding(12.dp),
+                                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                                    verticalAlignment = Alignment.CenterVertically
+                                                ) {
+                                                    Column(modifier = Modifier.weight(1f)) {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                                         Text("Neon Edge Lighting (Party Mode)", color = textColor, fontSize = 13.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
                                                         Text("Screen borders glow and throb to the bass", color = subTextColor, fontSize = 10.sp)
                                                     }
@@ -1980,11 +2665,48 @@ class MainActivity : ComponentActivity() {
 
     private fun loadBooks() {
         GlobalScope.launch(Dispatchers.IO) {
+<<<<<<< HEAD
             val books = BookRepository.scanEpubFiles(this@MainActivity) +
                 BookRepository.scanAudiobookFolders(this@MainActivity)
             withContext(Dispatchers.Main) {
                 booksList.clear()
                 booksList.addAll(books.distinctBy { it.contentUri.toString() })
+=======
+            val scanned = BookRepository.scanEpubFiles(this@MainActivity) +
+                BookRepository.scanAudiobookFolders(this@MainActivity)
+            // Manually picked EPUB URIs (OpenDocument)
+            val manual = mutableListOf<BookItem>()
+            val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+            prefs.getStringSet("manual_epubs", emptySet())?.forEach { uriStr ->
+                try {
+                    val uri = android.net.Uri.parse(uriStr)
+                    val name = try {
+                        contentResolver.query(uri, null, null, null, null)?.use { c ->
+                            if (c.moveToFirst()) {
+                                val idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                                if (idx >= 0) c.getString(idx) else null
+                            } else null
+                        }
+                    } catch (_: Exception) { null }
+                    val title = (name ?: uri.lastPathSegment ?: "EPUB")
+                        .removeSuffix(".epub").removeSuffix(".EPUB")
+                    manual.add(
+                        BookItem(
+                            id = uriStr.hashCode().toLong() and 0x7FFFFFFFFFFFFFFFL,
+                            title = title,
+                            path = uriStr,
+                            contentUri = uri,
+                            isAudiobook = false,
+                            sizeBytes = 0L
+                        )
+                    )
+                } catch (_: Exception) {}
+            }
+            val books = (manual + scanned).distinctBy { it.contentUri.toString() }
+            withContext(Dispatchers.Main) {
+                booksList.clear()
+                booksList.addAll(books)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 booksList.filter { it.isAudiobook }.forEach { book ->
                     val chapters = BookRepository.getAudiobookChapters(this@MainActivity, book.path)
                     if (chapters.isNotEmpty()) {
@@ -2007,7 +2729,12 @@ class MainActivity : ComponentActivity() {
 
     private fun resetFilter() {
         displayTracks.clear()
+<<<<<<< HEAD
         displayTracks.addAll(allTracks)
+=======
+        displayTracks.addAll(sortLibraryTracks(allTracks.toList()))
+        tryResumeLastSession()
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
         isFiltered = false
         activeFilterName = ""
     }
@@ -2094,7 +2821,13 @@ class MainActivity : ComponentActivity() {
                 allTracks.clear()
                 allTracks.addAll(discoveredTracks)
                 displayTracks.clear()
+<<<<<<< HEAD
                 displayTracks.addAll(discoveredTracks)
+=======
+                displayTracks.addAll(sortLibraryTracks(discoveredTracks))
+                tryResumeLastSession()
+                loadBooks()
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 genresList.clear()
                 genresList.addAll(discoveredGenres)
                 artistsList.clear()
@@ -2128,14 +2861,31 @@ class MainActivity : ComponentActivity() {
         onTrackSelect: (MusicTrack) -> Unit,
         onTrackLongClick: (MusicTrack) -> Unit,
         onToggleFavorite: (MusicTrack) -> Unit,
+<<<<<<< HEAD
         onEditTrack: (MusicTrack) -> Unit
+=======
+        onEditTrack: (MusicTrack) -> Unit,
+        onScrollMinimize: () -> Unit = {}
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
     ) {
         if (tracks.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No tracks found.", color = subTextColor)
             }
         } else {
+<<<<<<< HEAD
             LazyColumn(
+=======
+            val listState = rememberLazyListState()
+            LaunchedEffect(listState) {
+                snapshotFlow { listState.isScrollInProgress }
+                    .collect { scrolling ->
+                        if (scrolling) onScrollMinimize()
+                    }
+            }
+            LazyColumn(
+                state = listState,
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(vertical = 4.dp)
             ) {
@@ -2157,7 +2907,11 @@ class MainActivity : ComponentActivity() {
                         colors = CardDefaults.cardColors(
                             containerColor = if (isCurrent) accentColor.copy(alpha = 0.2f) else cardBg
                         ),
+<<<<<<< HEAD
                         shape = RoundedCornerShape(12.dp)
+=======
+                        shape = RoundedCornerShape(16.dp)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                     ) {
                         Row(
                             modifier = Modifier.padding(12.dp),
@@ -2167,7 +2921,11 @@ class MainActivity : ComponentActivity() {
                                 uri = track.uri,
                                 existing = track.artwork,
                                 accent = accentColor,
+<<<<<<< HEAD
                                 sizeDp = 40
+=======
+                                sizeDp = 44
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                             )
 
                             Spacer(modifier = Modifier.width(12.dp))
@@ -2188,10 +2946,22 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     if (mood != null) {
                                         Text(
+<<<<<<< HEAD
                                             text = moodIcons[mood] ?: "🎵",
                                             fontSize = 12.sp
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
+=======
+                                            text = moodIcons[mood] ?: "MOOD",
+                                            color = accentColor,
+                                            fontSize = 10.sp,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                            modifier = Modifier
+                                                .background(accentColor.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
+                                                .padding(horizontal = 4.dp, vertical = 1.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                     }
                                     Text(
                                         text = "${track.artist} • ${track.genre}",
@@ -2472,21 +3242,77 @@ class MainActivity : ComponentActivity() {
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+<<<<<<< HEAD
                     Text("MediaNexpo", fontSize = 24.sp, color = themeAccent)
                     Spacer(modifier = Modifier.height(12.dp))
                     Text("Created by RomLord14495 (aka Kyle) from XDA", fontSize = 13.sp, color = textColor)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text("Lightweight Open-Source Local Audio Player with SAF Support", fontSize = 12.sp, color = Color.Gray)
                     Spacer(modifier = Modifier.height(12.dp))
+=======
+                    Text(
+                        "MediaNexpo",
+                        fontSize = 26.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                        color = themeAccent
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("by Kyle (RomLord14495)", fontSize = 14.sp, color = textColor)
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Text(
+                        "Local music, videos, photos, and books. No account, no cloud — your files, your rules.",
+                        fontSize = 13.sp,
+                        color = Color.Gray,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        lineHeight = 18.sp
+                    )
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text(
+                        "In this build",
+                        fontSize = 13.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                        color = themeAccent
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        "Beat visualizer • EQ + presets • A-B loop\nSound Moments • Moods • Private Vault\nLyrics (.lrc) • Books/EPUB • Wi-Fi share\nResume session • Sleep timer • Gapless\nPlay Next • Tag editor • QS tile",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        lineHeight = 18.sp
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        "Coming up",
+                        fontSize = 13.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                        color = themeAccent
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        "• Home widgets • Chromecast\n• Folder picker improvements\n• More visualizer styles",
+                        fontSize = 12.sp,
+                        color = Color.Gray,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        lineHeight = 18.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                     Button(
                         onClick = {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/crabcakes97/MediaNexpo"))
                             context.startActivity(intent)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = themeAccent),
+<<<<<<< HEAD
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text("View on GitHub", color = Color.Black)
+=======
+                        shape = RoundedCornerShape(24.dp)
+                    ) {
+                        Text("GitHub", color = Color.Black)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                     }
                 }
             }
@@ -2510,8 +3336,16 @@ class MainActivity : ComponentActivity() {
                 MediaStore.Audio.Media.TITLE,
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.GENRE,
+<<<<<<< HEAD
                 MediaStore.Audio.Media.DISPLAY_NAME
             )
+=======
+                MediaStore.Audio.Media.DISPLAY_NAME,
+                MediaStore.Audio.Media.DATA
+            )
+            // Snapshot blacklist for IO thread
+            val blocked = folderBlacklist.map { it.lowercase() }.toList()
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 
             try {
                 val cursor = contentResolver.query(
@@ -2528,8 +3362,17 @@ class MainActivity : ComponentActivity() {
                     val artistCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                     val genreCol = it.getColumnIndex(MediaStore.Audio.Media.GENRE)
                     val nameCol = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DISPLAY_NAME)
+<<<<<<< HEAD
 
                     while (it.moveToNext()) {
+=======
+                    val dataCol = it.getColumnIndex(MediaStore.Audio.Media.DATA)
+
+                    while (it.moveToNext()) {
+                        val path = if (dataCol >= 0) it.getString(dataCol) ?: "" else ""
+                        if (path.isNotEmpty() && blocked.any { b -> path.lowercase().contains(b) }) continue
+
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                         val id = it.getLong(idCol)
                         val title = it.getString(titleCol) ?: "Unknown Title"
                         val artist = it.getString(artistCol) ?: "Unknown Artist"
@@ -2537,8 +3380,13 @@ class MainActivity : ComponentActivity() {
                         val displayName = it.getString(nameCol) ?: title
                         val contentUri = Uri.withAppendedPath(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, id.toString())
 
+<<<<<<< HEAD
                         val artwork = extractArtwork(contentUri)
                         discoveredTracks.add(MusicTrack(displayName, title, artist, genre, contentUri, artwork))
+=======
+                        // Defer artwork — extracting every cover during scan freezes UI
+                        discoveredTracks.add(MusicTrack(displayName, title, artist, genre, contentUri, null))
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                         if (genre != "Unknown Genre") discoveredGenres.add(genre)
                         if (artist != "Unknown Artist") discoveredArtists.add(artist)
                     }
@@ -2557,32 +3405,60 @@ class MainActivity : ComponentActivity() {
             }
 
             withContext(Dispatchers.Main) {
+<<<<<<< HEAD
                 val distinctList = discoveredTracks.distinctBy { "${it.title}_${it.artist}" }
+=======
+                val distinctList = sortLibraryTracks(discoveredTracks.distinctBy { "${it.title}_${it.artist}" })
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 allTracks.clear()
                 allTracks.addAll(distinctList)
                 displayTracks.clear()
                 displayTracks.addAll(distinctList)
                 genresList.clear()
+<<<<<<< HEAD
                 genresList.addAll(discoveredGenres)
                 artistsList.clear()
                 artistsList.addAll(discoveredArtists)
+=======
+                genresList.addAll(discoveredGenres.sorted())
+                artistsList.clear()
+                artistsList.addAll(discoveredArtists.sorted())
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 val scannedVideos = VideoRepository.scanLocalVideos(this@MainActivity)
                 videosList.clear()
                 videosList.addAll(scannedVideos)
                 val scannedPhotos = PhotoRepository.scanLocalPhotos(this@MainActivity)
                 photosList.clear()
                 photosList.addAll(scannedPhotos)
+<<<<<<< HEAD
                 
                 saveLibraryToCache(distinctList)
                 isScanning = false
+=======
+                saveLibraryToCache(distinctList)
+                isScanning = false
+                tryResumeLastSession()
+                loadBooks()
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
             }
         }
     }
 
     private fun traverseRecursive(dir: DocumentFile, outTracks: MutableList<MusicTrack>, outGenres: MutableSet<String>, outArtists: MutableSet<String>) {
+<<<<<<< HEAD
         val files = dir.listFiles()
         for (file in files) {
             if (file.isDirectory) {
+=======
+        val blocked = folderBlacklist.map { it.lowercase() }
+        val dirName = (dir.name ?: "").lowercase()
+        if (blocked.any { dirName.contains(it) }) return
+        val files = dir.listFiles()
+        for (file in files) {
+            if (file.isDirectory) {
+                val childName = (file.name ?: "").lowercase()
+                if (blocked.any { childName.contains(it) }) continue
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 traverseRecursive(file, outTracks, outGenres, outArtists)
             } else if (file.name != null && (
                 file.name!!.endsWith(".mp3", true) ||
@@ -2660,6 +3536,196 @@ class MainActivity : ComponentActivity() {
         return MusicTrack(fallbackName, title, artist, genre, uri, artwork)
     }
 
+<<<<<<< HEAD
+=======
+    private var lastShakeMs = 0L
+    private val shakeListener = object : android.hardware.SensorEventListener {
+        override fun onAccuracyChanged(sensor: android.hardware.Sensor?, accuracy: Int) {}
+        override fun onSensorChanged(event: android.hardware.SensorEvent?) {
+            if (!shakeToSkipEnabled || event == null) return
+            val x = event.values.getOrNull(0) ?: return
+            val y = event.values.getOrNull(1) ?: 0f
+            val z = event.values.getOrNull(2) ?: 0f
+            val g = kotlin.math.sqrt((x * x + y * y + z * z).toDouble()).toFloat()
+            if (g < 13.5f) return
+            val now = System.currentTimeMillis()
+            if (now - lastShakeMs < 900) return
+            lastShakeMs = now
+            try {
+                player?.let { if (it.hasNextMediaItem()) it.seekToNext() }
+                hapticTick()
+            } catch (_: Exception) {}
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        if (shakeToSkipEnabled) registerShake()
+    }
+
+    override fun onStop() {
+        try { unregisterShake() } catch (_: Exception) {}
+        super.onStop()
+    }
+
+    private fun registerShake() {
+        try {
+            val sm = getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+            val accel = sm.getDefaultSensor(android.hardware.Sensor.TYPE_ACCELEROMETER) ?: return
+            sm.registerListener(shakeListener, accel, android.hardware.SensorManager.SENSOR_DELAY_UI)
+        } catch (_: Exception) {}
+    }
+
+    private fun unregisterShake() {
+        try {
+            val sm = getSystemService(SENSOR_SERVICE) as android.hardware.SensorManager
+            sm.unregisterListener(shakeListener)
+        } catch (_: Exception) {}
+    }
+
+    private fun requestQsTile() {
+        if (android.os.Build.VERSION.SDK_INT < 33) {
+            android.widget.Toast.makeText(
+                this,
+                "Pull down Quick Settings → pencil/Edit → drag MediaNexpo in",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        try {
+            val sb = getSystemService(android.app.StatusBarManager::class.java)
+            if (sb == null) {
+                android.widget.Toast.makeText(this, "Quick Settings not available", android.widget.Toast.LENGTH_SHORT).show()
+                return
+            }
+            val cn = android.content.ComponentName(this, PlayPauseTileService::class.java)
+            val icon = try {
+                android.graphics.drawable.Icon.createWithResource(this, R.drawable.ic_launcher)
+            } catch (_: Exception) {
+                android.graphics.drawable.Icon.createWithResource(this, android.R.drawable.ic_media_play)
+            }
+            sb.requestAddTileService(cn, "MediaNexpo", icon, mainExecutor) { result ->
+                val msg = when (result) {
+                    2 -> "Tile added — open the shade to use it"
+                    1 -> "Already added — open Quick Settings to find it"
+                    0 -> "Not added — try Edit tiles in the shade"
+                    3 -> "Tile not found (reinstall app)"
+                    else -> "Open shade → Edit → add MediaNexpo"
+                }
+                runOnUiThread {
+                    android.widget.Toast.makeText(this@MainActivity, msg, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(
+                this,
+                "Pull down Quick Settings → Edit → add MediaNexpo",
+                android.widget.Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    private fun hapticTick() {
+        if (!hapticFeedbackEnabled) return
+        // Path 1: framework view haptics (respects OEM haptic engine)
+        try {
+            window.decorView.performHapticFeedback(
+                android.view.HapticFeedbackConstants.KEYBOARD_TAP,
+                android.view.HapticFeedbackConstants.FLAG_IGNORE_VIEW_SETTING
+            )
+        } catch (_: Exception) {}
+        // Path 2: explicit vibrator (works when system haptic feedback is off)
+        try {
+            val vibrator = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                getSystemService(android.os.VibratorManager::class.java)?.defaultVibrator
+            } else {
+                @Suppress("DEPRECATION")
+                getSystemService(VIBRATOR_SERVICE) as? android.os.Vibrator
+            } ?: return
+            if (!vibrator.hasVibrator()) return
+            when {
+                android.os.Build.VERSION.SDK_INT >= 29 -> {
+                    try {
+                        vibrator.vibrate(
+                            android.os.VibrationEffect.createPredefined(
+                                android.os.VibrationEffect.EFFECT_CLICK
+                            )
+                        )
+                    } catch (_: Exception) {
+                        vibrator.vibrate(
+                            android.os.VibrationEffect.createOneShot(40, 180)
+                        )
+                    }
+                }
+                android.os.Build.VERSION.SDK_INT >= 26 -> {
+                    vibrator.vibrate(
+                        android.os.VibrationEffect.createOneShot(40, 180)
+                    )
+                }
+                else -> {
+                    @Suppress("DEPRECATION")
+                    vibrator.vibrate(40)
+                }
+            }
+        } catch (_: Exception) {}
+    }
+
+    private fun sortLibraryTracks(list: List<MusicTrack>): List<MusicTrack> {
+        return when (librarySort) {
+            "artist" -> list.sortedWith(compareBy({ it.artist.lowercase() }, { it.title.lowercase() }))
+            else -> list.sortedBy { it.title.lowercase() }
+        }
+    }
+
+    private fun tryResumeLastSession() {
+        if (!resumeOnLaunch) return
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        val uriStr = prefs.getString("last_track_uri", null) ?: return
+        val track = allTracks.firstOrNull { it.uri.toString() == uriStr }
+            ?: displayTracks.firstOrNull { it.uri.toString() == uriStr }
+            ?: return
+        if (displayTracks.none { it.uri == track.uri }) {
+            // Ensure track is in current queue list
+            if (displayTracks.isEmpty()) {
+                displayTracks.clear()
+                displayTracks.addAll(sortLibraryTracks(allTracks.toList()))
+            }
+        }
+        val idx = displayTracks.indexOfFirst { it.uri == track.uri }
+        if (idx < 0) {
+            displayTracks.add(0, track)
+        }
+        currentTrack = track
+        val items = displayTracks.map { trackItem ->
+            MediaItem.Builder()
+                .setUri(trackItem.uri)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(trackItem.title)
+                        .setArtist(trackItem.artist)
+                        .setGenre(trackItem.genre)
+                        .build()
+                )
+                .build()
+        }
+        player?.stop()
+        player?.clearMediaItems()
+        player?.setMediaItems(items)
+        val startIndex = displayTracks.indexOfFirst { it.uri == track.uri }.coerceAtLeast(0)
+        val resumePos = if (rememberTrackPosition) loadPlaybackPosition(track.uri) else 0L
+        player?.seekTo(startIndex, resumePos.coerceAtLeast(0L))
+        applyPlaybackParams()
+        player?.prepare()
+        if (autoPlayOnLaunch) {
+            player?.playWhenReady = true
+            player?.play()
+        } else {
+            player?.playWhenReady = false
+            player?.pause()
+        }
+    }
+
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
     private fun savePlaybackPosition(uri: Uri, positionMs: Long) {
         if (positionMs < 5_000L) return
         if (totalDurationMs > 0 && positionMs > totalDurationMs - 10_000L) {
@@ -2713,13 +3779,56 @@ class MainActivity : ComponentActivity() {
             .edit().putFloat("playback_pitch", pitch).apply()
     }
 
+<<<<<<< HEAD
     private fun playTrack(track: MusicTrack) {
+=======
+    private fun enqueuePlayNext(track: MusicTrack) {
+        playNextQueue.removeAll { it.uri == track.uri }
+        playNextQueue.add(0, track)
+        // Insert into ExoPlayer timeline right after current item
+        try {
+            val p = player ?: return
+            val meta = MediaMetadata.Builder()
+                .setTitle(track.title)
+                .setArtist(track.artist)
+                .setGenre(track.genre)
+                .build()
+            val item = MediaItem.Builder().setUri(track.uri).setMediaMetadata(meta).build()
+            val idx = (p.currentMediaItemIndex + 1).coerceAtLeast(0)
+            p.addMediaItem(idx, item)
+            android.widget.Toast.makeText(this, "Next: ${track.title}", android.widget.Toast.LENGTH_SHORT).show()
+        } catch (_: Exception) {
+            android.widget.Toast.makeText(this, "Queued: ${track.title}", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun playTrack(track: MusicTrack) {
+        hapticTick()
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
         currentTrack?.let { prev ->
             if (currentPositionMs > 0) savePlaybackPosition(prev.uri, currentPositionMs)
         }
 
         RecentlyPlayedStore.record(this, track.uri, track.title, track.artist)
+<<<<<<< HEAD
         currentTrack = track
+=======
+        getSharedPreferences("prefs", MODE_PRIVATE).edit()
+            .putString("last_track_uri", track.uri.toString())
+            .putString("last_track_title", track.title)
+            .apply()
+        currentTrack = track
+        // XDA / Tasker meta broadcast
+        try {
+            sendBroadcast(Intent(MediaControlReceiver.ACTION_META_CHANGED).apply {
+                setPackage(packageName)
+                putExtra("title", track.title)
+                putExtra("artist", track.artist)
+                putExtra("album", track.genre)
+                putExtra("playing", true)
+            })
+        } catch (_: Exception) {}
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
         GlobalScope.launch(Dispatchers.IO) {
             val lines = LyricsRepository.loadForUri(this@MainActivity, track.uri)
             withContext(Dispatchers.Main) { lyricsLines = lines }
@@ -2746,7 +3855,11 @@ class MainActivity : ComponentActivity() {
         player?.setMediaItems(items)
 
         val startIndex = displayTracks.indexOf(track)
+<<<<<<< HEAD
         val resumePos = loadPlaybackPosition(track.uri)
+=======
+        val resumePos = if (rememberTrackPosition) loadPlaybackPosition(track.uri) else 0L
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
         if (startIndex >= 0) {
             player?.seekTo(startIndex, resumePos.coerceAtLeast(0L))
         }
@@ -2884,8 +3997,15 @@ fun CurrentPlayerSection(
                         }
                     )
                 },
+<<<<<<< HEAD
             shape = RoundedCornerShape(16.dp),
             colors = CardDefaults.cardColors(containerColor = activeCardBg)
+=======
+            shape = RoundedCornerShape(18.dp),
+            colors = CardDefaults.cardColors(containerColor = activeCardBg),
+            border = BorderStroke(1.5.dp, accentColor.copy(alpha = 0.55f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
         ) {
             Column(modifier = Modifier.padding(12.dp)) {
                 Row(
@@ -3043,13 +4163,45 @@ fun CurrentPlayerSection(
                         }
                     }
 
+<<<<<<< HEAD
                     Spacer(modifier = Modifier.height(6.dp))
+=======
+                    // ±10 second scrub — useful for podcasts / long tracks
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TextButton(onClick = {
+                            onSeek((currentPositionMs - 10_000L).coerceAtLeast(0L))
+                        }) {
+                            Text("−10s", color = subTextColor, fontSize = 12.sp)
+                        }
+                        Spacer(modifier = Modifier.width(24.dp))
+                        TextButton(onClick = {
+                            val dest = if (totalDurationMs > 0) {
+                                (currentPositionMs + 10_000L).coerceAtMost(totalDurationMs)
+                            } else currentPositionMs + 10_000L
+                            onSeek(dest)
+                        }) {
+                            Text("+10s", color = subTextColor, fontSize = 12.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(2.dp))
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                     var showAdvancedTools by remember { mutableStateOf(false) }
                     OutlinedButton(
                         onClick = { showAdvancedTools = !showAdvancedTools },
                         modifier = Modifier.fillMaxWidth(),
                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+<<<<<<< HEAD
                         shape = RoundedCornerShape(12.dp)
+=======
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.55f)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -3083,7 +4235,12 @@ fun CurrentPlayerSection(
                                 .fillMaxWidth()
                                 .heightIn(max = 320.dp),
                             colors = CardDefaults.cardColors(containerColor = activeCardBg),
+<<<<<<< HEAD
                             shape = RoundedCornerShape(12.dp)
+=======
+                            shape = RoundedCornerShape(14.dp),
+                            border = BorderStroke(1.dp, accentColor.copy(alpha = 0.35f))
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                         ) {
                             Column(
                                 modifier = Modifier
@@ -3107,9 +4264,18 @@ fun CurrentPlayerSection(
                                             }
                                         },
                                         modifier = Modifier.weight(1f),
+<<<<<<< HEAD
                                         contentPadding = PaddingValues(4.dp)
                                     ) {
                                         Text(if (loopAMs != null) "A: ${formatTime(loopAMs!!)}" else "Set A", color = textColor, fontSize = 11.sp)
+=======
+                                        contentPadding = PaddingValues(4.dp),
+                                        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.65f)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(if (loopAMs != null) "A: ${formatTime(loopAMs!!)}" else "Set A", color = accentColor, fontSize = 11.sp)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                     }
                                     OutlinedButton(
                                         onClick = {
@@ -3122,9 +4288,18 @@ fun CurrentPlayerSection(
                                             }
                                         },
                                         modifier = Modifier.weight(1f),
+<<<<<<< HEAD
                                         contentPadding = PaddingValues(4.dp)
                                     ) {
                                         Text(if (loopBMs != null) "B: ${formatTime(loopBMs!!)}" else "Set B", color = textColor, fontSize = 11.sp)
+=======
+                                        contentPadding = PaddingValues(4.dp),
+                                        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.65f)),
+                                        colors = ButtonDefaults.outlinedButtonColors(contentColor = accentColor),
+                                        shape = RoundedCornerShape(12.dp)
+                                    ) {
+                                        Text(if (loopBMs != null) "B: ${formatTime(loopBMs!!)}" else "Set B", color = accentColor, fontSize = 11.sp)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                     }
                                     Button(
                                         onClick = { onSetLoop(null, null, false) },
@@ -3155,7 +4330,16 @@ fun CurrentPlayerSection(
                                 OutlinedButton(
                                     onClick = { showMomentDialog = true },
                                     modifier = Modifier.fillMaxWidth(),
+<<<<<<< HEAD
                                     shape = RoundedCornerShape(10.dp)
+=======
+                                    shape = RoundedCornerShape(12.dp),
+                                    border = BorderStroke(1.dp, accentColor.copy(alpha = 0.7f)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = accentColor,
+                                        containerColor = accentColor.copy(alpha = 0.08f)
+                                    )
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                 ) {
                                     Text("Capture moment @ ${formatTime(currentPositionMs)}", color = accentColor, fontSize = 12.sp)
                                 }
@@ -3252,7 +4436,16 @@ fun CurrentPlayerSection(
                                 OutlinedButton(
                                     onClick = onOpenLyrics,
                                     modifier = Modifier.fillMaxWidth(),
+<<<<<<< HEAD
                                     shape = RoundedCornerShape(10.dp)
+=======
+                                    shape = RoundedCornerShape(12.dp),
+                                    border = BorderStroke(1.dp, accentColor.copy(alpha = 0.7f)),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = accentColor,
+                                        containerColor = accentColor.copy(alpha = 0.08f)
+                                    )
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                 ) {
                                     Text(
                                         if (hasLyrics) "Show Synced Lyrics" else "Lyrics (drop a .lrc next to the song)",
@@ -3271,9 +4464,16 @@ fun CurrentPlayerSection(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
+<<<<<<< HEAD
                                         .height(44.dp)
                                         .clip(RoundedCornerShape(8.dp))
                                         .background(accentColor.copy(alpha = 0.15f))
+=======
+                                        .height(48.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(accentColor.copy(alpha = 0.12f))
+                                        .border(BorderStroke(1.dp, accentColor.copy(alpha = 0.5f)), RoundedCornerShape(12.dp))
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                         .pointerInput(currentTrack) {
                                             detectHorizontalDragGestures(
                                                 onDragStart = { 
@@ -3447,8 +4647,13 @@ object MainActivityInstanceHelper {
                     val n = minOf(display.size, latest.size)
                     for (i in 0 until n) {
                         val target = latest[i]
+<<<<<<< HEAD
                         // Rise with the hit, fall fast enough to leave gaps between beats
                         val k = if (target > display[i]) 0.75f else 0.32f
+=======
+                        // Snappy rise, clean fall so bars dance with the mix
+                        val k = if (target > display[i]) 0.85f else 0.28f
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                         display[i] += (target - display[i]) * k
                     }
                     val pulse = PlaybackService.beatPulse
@@ -3747,6 +4952,7 @@ private fun formatTime(timeMs: Long): String {
 
 @Composable
 fun FullscreenImageView(
+<<<<<<< HEAD
     uri: Uri,
     title: String,
     accentColor: Color,
@@ -3767,6 +4973,24 @@ fun FullscreenImageView(
             } catch (_: Exception) {}
         }
     }
+=======
+    photos: List<PhotoItem>,
+    initialIndex: Int,
+    accentColor: Color,
+    favoriteUris: Set<String>,
+    onDismiss: () -> Unit,
+    onShare: (PhotoItem) -> Unit,
+    onToggleFavorite: (PhotoItem) -> Unit
+) {
+    val context = LocalContext.current
+    val safeCount = photos.size.coerceAtLeast(1)
+    val pagerState = rememberPagerState(
+        initialPage = initialIndex.coerceIn(0, safeCount - 1),
+        pageCount = { safeCount }
+    )
+    val current = photos.getOrNull(pagerState.currentPage) ?: photos.firstOrNull()
+    val isFavorite = current != null && favoriteUris.contains(current.contentUri.toString())
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 
     Box(
         modifier = Modifier
@@ -3774,6 +4998,7 @@ fun FullscreenImageView(
             .background(Color.Black)
             .clickable(enabled = false) {}
     ) {
+<<<<<<< HEAD
         if (bitmap != null) {
             Image(
                 bitmap = bitmap!!.asImageBitmap(),
@@ -3784,6 +5009,34 @@ fun FullscreenImageView(
         } else {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = accentColor)
+=======
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize()
+        ) { page ->
+            val photo = photos[page]
+            var bitmap by remember(photo.contentUri) { mutableStateOf<Bitmap?>(null) }
+            LaunchedEffect(photo.contentUri) {
+                withContext(Dispatchers.IO) {
+                    try {
+                        context.contentResolver.openInputStream(photo.contentUri)?.use { stream ->
+                            bitmap = BitmapFactory.decodeStream(stream)
+                        }
+                    } catch (_: Exception) {}
+                }
+            }
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap!!.asImageBitmap(),
+                        contentDescription = photo.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                    )
+                } else {
+                    CircularProgressIndicator(color = accentColor)
+                }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
             }
         }
 
@@ -3799,6 +5052,7 @@ fun FullscreenImageView(
             IconButton(onClick = onDismiss) {
                 Icon(Icons.Default.ArrowBack, contentDescription = "Close", tint = Color.White)
             }
+<<<<<<< HEAD
             Text(
                 text = title,
                 color = Color.White,
@@ -3815,6 +5069,34 @@ fun FullscreenImageView(
             }
             IconButton(onClick = onShare) {
                 Icon(Icons.Default.Share, contentDescription = "Share", tint = accentColor)
+=======
+            Column(modifier = Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                Text(
+                    text = current?.title ?: "",
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    maxLines = 1
+                )
+                if (safeCount > 1) {
+                    Text(
+                        text = "${pagerState.currentPage + 1} / $safeCount  ·  swipe",
+                        color = Color.White.copy(alpha = 0.6f),
+                        fontSize = 11.sp
+                    )
+                }
+            }
+            if (current != null) {
+                IconButton(onClick = { onToggleFavorite(current) }) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Favorite",
+                        tint = if (isFavorite) Color.Red else Color.White
+                    )
+                }
+                IconButton(onClick = { onShare(current) }) {
+                    Icon(Icons.Default.Share, contentDescription = "Share", tint = accentColor)
+                }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
             }
         }
     }
@@ -3885,16 +5167,30 @@ fun AudioEffectsSettingsSection(
             ) {
                 Column(modifier = Modifier.padding(12.dp)) {
                     Text("EQ Presets", color = textColor, fontSize = 14.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold)
+<<<<<<< HEAD
                     Spacer(modifier = Modifier.height(8.dp))
+=======
+                    Text("Swipe chips to browse • tap to apply", color = subTextColor, fontSize = 11.sp)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    var selectedPreset by remember { mutableStateOf("Flat") }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                     androidx.compose.foundation.lazy.LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(EqPresets.all.size) { i ->
                             val preset = EqPresets.all[i]
+<<<<<<< HEAD
                             OutlinedButton(
                                 onClick = {
                                     EqPresets.apply(preset)
                                     // Sync local slider state
+=======
+                            val selected = selectedPreset == preset.name
+                            Button(
+                                onClick = {
+                                    selectedPreset = preset.name
+                                    EqPresets.apply(preset)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                     for (b in preset.bands.indices) {
                                         if (b < eqBands.size) {
                                             eqBands[b] = preset.bands[b] / 100f
@@ -3905,9 +5201,21 @@ fun AudioEffectsSettingsSection(
                                     gainLevel = preset.gainMb / 1000f
                                 },
                                 shape = RoundedCornerShape(20.dp),
+<<<<<<< HEAD
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
                             ) {
                                 Text(preset.name, color = accentColor, fontSize = 11.sp)
+=======
+                                contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (selected) accentColor else accentColor.copy(alpha = 0.12f),
+                                    contentColor = if (selected) Color.Black else accentColor
+                                ),
+                                border = if (selected) null else BorderStroke(1.dp, accentColor.copy(alpha = 0.45f)),
+                                elevation = ButtonDefaults.buttonElevation(defaultElevation = if (selected) 2.dp else 0.dp)
+                            ) {
+                                Text(preset.name, fontSize = 12.sp, fontWeight = if (selected) androidx.compose.ui.text.font.FontWeight.SemiBold else androidx.compose.ui.text.font.FontWeight.Normal)
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                             }
                         }
                     }
@@ -4393,7 +5701,14 @@ fun PhotoList(
 
     if (selectedFolder == null) {
         if (folders.isEmpty()) {
+<<<<<<< HEAD
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+=======
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 Text("No photos found", color = Color.Gray)
             }
         } else {
@@ -4414,7 +5729,11 @@ fun PhotoList(
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.08f))
                         ) {
+<<<<<<< HEAD
                             Box(Modifier.fillMaxSize()) {
+=======
+                            Box(modifier = Modifier.fillMaxSize()) {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                                 if (cover != null) {
                                     PhotoThumb(uri = cover, modifier = Modifier.fillMaxSize())
                                 }
@@ -4487,7 +5806,11 @@ fun PhotoList(
                         shape = RoundedCornerShape(10.dp),
                         colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.4f))
                     ) {
+<<<<<<< HEAD
                         Box(Modifier.fillMaxSize()) {
+=======
+                        Box(modifier = Modifier.fillMaxSize()) {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                             PhotoThumb(uri = photo.contentUri, modifier = Modifier.fillMaxSize())
                             IconButton(
                                 onClick = { onToggleFavorite(photo) },
@@ -4555,7 +5878,11 @@ private fun PhotoThumb(uri: Uri, modifier: Modifier = Modifier) {
             contentScale = androidx.compose.ui.layout.ContentScale.Crop
         )
     } else {
+<<<<<<< HEAD
         Box(modifier.background(Color.DarkGray), contentAlignment = Alignment.Center) {
+=======
+        Box(modifier = modifier.background(Color.DarkGray), contentAlignment = Alignment.Center) {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
             Text("…", color = Color.White)
         }
     }
@@ -4585,7 +5912,14 @@ fun RecentView(
             }
         }
         if (entries.isEmpty()) {
+<<<<<<< HEAD
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+=======
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                 Text("Play some songs — history shows up here.", color = subTextColor)
             }
         } else {
@@ -4657,7 +5991,24 @@ fun MoodsView(
                     modifier = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+<<<<<<< HEAD
                     Text(moodIcons[mood] ?: "🎵", fontSize = 28.sp)
+=======
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(themeAccent.copy(alpha = 0.18f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            moodIcons[mood] ?: "MOOD",
+                            color = themeAccent,
+                            fontSize = 11.sp,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
+                    }
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(mood, color = textColor, fontSize = 17.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
@@ -4678,7 +6029,12 @@ fun BooksView(
     textColor: Color,
     onEpubClick: (BookItem) -> Unit,
     onAudiobookClick: (BookItem) -> Unit,
+<<<<<<< HEAD
     onAddBook: () -> Unit
+=======
+    onAddBook: () -> Unit,
+    onPickEpub: () -> Unit = {}
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(8.dp)) {
         Row(
@@ -4686,6 +6042,7 @@ fun BooksView(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+<<<<<<< HEAD
             Text("Books & Audiobooks", color = textColor, fontSize = 17.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
             TextButton(onClick = onAddBook) {
                 Text("+ Add", color = themeAccent, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
@@ -4694,6 +6051,28 @@ fun BooksView(
         if (books.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text("No books found.\nAdd an EPUB or audiobook folder.", color = Color.Gray, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+=======
+            Text("Books", color = textColor, fontSize = 17.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+            Row {
+                TextButton(onClick = onPickEpub) {
+                    Text("Add EPUB", color = themeAccent, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                }
+                TextButton(onClick = onAddBook) {
+                    Text("Rescan", color = themeAccent, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                }
+            }
+        }
+        if (books.isEmpty()) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "No books found.\nTap Add EPUB to pick a file,\nor put .epub in Downloads / Documents / Books\nand tap Rescan.",
+                    color = Color.Gray,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                )
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -4729,3 +6108,264 @@ fun BooksView(
         }
     }
 }
+<<<<<<< HEAD
+=======
+
+@Composable
+fun VaultView(
+    context: android.content.Context,
+    allTracks: List<MusicTrack>,
+    allVideos: List<VideoItem>,
+    allPhotos: List<PhotoItem>,
+    cardBg: Color,
+    textColor: Color,
+    subTextColor: Color,
+    accentColor: Color,
+    onPlay: (MusicTrack) -> Unit,
+    onOpenVideo: (VideoItem) -> Unit,
+    onOpenPhoto: (PhotoItem) -> Unit
+) {
+    var unlocked by remember { mutableStateOf(PrivateVaultStore.isUnlocked(context)) }
+    var pinInput by remember { mutableStateOf("") }
+    var setupMode by remember { mutableStateOf(!PrivateVaultStore.hasPin(context)) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var tick by remember { mutableIntStateOf(0) }
+    val vaultUris = remember(tick, unlocked) { PrivateVaultStore.uris(context) }
+    val vaultTracks = remember(vaultUris, allTracks) {
+        allTracks.filter { vaultUris.contains(it.uri.toString()) }
+    }
+    val vaultVideos = remember(vaultUris, allVideos) {
+        allVideos.filter { vaultUris.contains(it.contentUri.toString()) }
+    }
+    val vaultPhotos = remember(vaultUris, allPhotos) {
+        allPhotos.filter { vaultUris.contains(it.contentUri.toString()) }
+    }
+    val totalHidden = vaultTracks.size + vaultVideos.size + vaultPhotos.size
+
+    Column(modifier = Modifier.fillMaxSize().padding(12.dp)) {
+        Text(
+            text = "Private Vault",
+            color = textColor,
+            fontSize = 18.sp,
+            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+        )
+        Text(
+            text = "PIN-locked songs, videos and photos. Long-press any item, then Vault.",
+            color = subTextColor,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+        )
+
+        if (!unlocked) {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = cardBg),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = if (setupMode) "Set a PIN" else "Enter PIN",
+                        color = textColor,
+                        fontSize = 14.sp,
+                        fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = pinInput,
+                        onValueChange = { v -> if (v.length <= 8) pinInput = v.filter { c -> c.isDigit() } },
+                        label = { Text("PIN") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (error != null) {
+                        Text(
+                            text = error ?: "",
+                            color = Color(0xFFFF8A80),
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                    Spacer(modifier = Modifier.height(10.dp))
+                    Button(
+                        onClick = {
+                            if (pinInput.length < 4) {
+                                error = "PIN needs at least 4 digits"
+                                return@Button
+                            }
+                            if (setupMode) {
+                                PrivateVaultStore.setPin(context, pinInput)
+                                PrivateVaultStore.setUnlocked(context, true)
+                                unlocked = true
+                                setupMode = false
+                                pinInput = ""
+                                error = null
+                            } else if (PrivateVaultStore.checkPin(context, pinInput)) {
+                                PrivateVaultStore.setUnlocked(context, true)
+                                unlocked = true
+                                pinInput = ""
+                                error = null
+                            } else {
+                                error = "Wrong PIN"
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = accentColor),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = if (setupMode) "Create Vault" else "Unlock",
+                            color = Color.Black
+                        )
+                    }
+                }
+            }
+        } else {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "$totalHidden hidden | ${vaultTracks.size} songs | ${vaultVideos.size} videos | ${vaultPhotos.size} photos",
+                    color = subTextColor,
+                    fontSize = 12.sp
+                )
+                TextButton(onClick = {
+                    PrivateVaultStore.setUnlocked(context, false)
+                    unlocked = false
+                }) {
+                    Text(text = "Lock", color = accentColor)
+                }
+            }
+
+            if (totalHidden == 0) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Vault is empty.\nLong-press a song, video, or photo, then Vault.",
+                        color = subTextColor,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                }
+            } else {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (vaultTracks.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = "Songs",
+                                color = accentColor,
+                                fontSize = 13.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                modifier = Modifier.padding(top = 4.dp, bottom = 2.dp)
+                            )
+                        }
+                        items(vaultTracks, key = { "t_" + it.uri.toString() }) { track ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onPlay(track) },
+                                colors = CardDefaults.cardColors(containerColor = cardBg),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(text = track.title, color = textColor, fontSize = 15.sp, maxLines = 1)
+                                        Text(text = track.artist, color = subTextColor, fontSize = 12.sp, maxLines = 1)
+                                    }
+                                    TextButton(onClick = {
+                                        PrivateVaultStore.remove(context, track.uri)
+                                        tick++
+                                    }) {
+                                        Text(text = "Remove", color = Color.Gray, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (vaultVideos.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = "Videos",
+                                color = accentColor,
+                                fontSize = 13.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                modifier = Modifier.padding(top = 10.dp, bottom = 2.dp)
+                            )
+                        }
+                        items(vaultVideos, key = { "v_" + it.contentUri.toString() }) { video ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenVideo(video) },
+                                colors = CardDefaults.cardColors(containerColor = cardBg),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(text = video.title, color = textColor, fontSize = 15.sp, maxLines = 1)
+                                        Text(text = "Video", color = subTextColor, fontSize = 12.sp)
+                                    }
+                                    TextButton(onClick = {
+                                        PrivateVaultStore.remove(context, video.contentUri)
+                                        tick++
+                                    }) {
+                                        Text(text = "Remove", color = Color.Gray, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (vaultPhotos.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = "Photos",
+                                color = accentColor,
+                                fontSize = 13.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                modifier = Modifier.padding(top = 10.dp, bottom = 2.dp)
+                            )
+                        }
+                        items(vaultPhotos, key = { "p_" + it.contentUri.toString() }) { photo ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable { onOpenPhoto(photo) },
+                                colors = CardDefaults.cardColors(containerColor = cardBg),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(text = photo.title, color = textColor, fontSize = 15.sp, maxLines = 1)
+                                        Text(text = "Photo", color = subTextColor, fontSize = 12.sp)
+                                    }
+                                    TextButton(onClick = {
+                                        PrivateVaultStore.remove(context, photo.contentUri)
+                                        tick++
+                                    }) {
+                                        Text(text = "Remove", color = Color.Gray, fontSize = 12.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+>>>>>>> 2c4ab1d (Initial commit after project recovery)

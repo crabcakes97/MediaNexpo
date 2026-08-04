@@ -1,9 +1,39 @@
 [
     {
+<<<<<<< HEAD
+=======
+        "merged": "com.medianexpo.player.app-merged_res-45:/layout_widget_media.xml.flat",
+        "source": "com.medianexpo.player.app-main-47:/layout/widget_media.xml"
+    },
+    {
+        "merged": "com.medianexpo.player.app-merged_res-45:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.medianexpo.player.app-main-47:/drawable/ic_launcher_foreground.xml"
+    },
+    {
+        "merged": "com.medianexpo.player.app-merged_res-45:/drawable_ic_launcher.xml.flat",
+        "source": "com.medianexpo.player.app-main-47:/drawable/ic_launcher.xml"
+    },
+    {
+        "merged": "com.medianexpo.player.app-merged_res-45:/xml_media_widget_info.xml.flat",
+        "source": "com.medianexpo.player.app-main-47:/xml/media_widget_info.xml"
+    },
+    {
+        "merged": "com.medianexpo.player.app-merged_res-45:/drawable_ic_launcher_background.xml.flat",
+        "source": "com.medianexpo.player.app-main-47:/drawable/ic_launcher_background.xml"
+    },
+    {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
         "merged": "com.medianexpo.player.app-merged_res-45:/drawable_ic_music_note.xml.flat",
         "source": "com.medianexpo.player.app-main-47:/drawable/ic_music_note.xml"
     },
     {
+<<<<<<< HEAD
+=======
+        "merged": "com.medianexpo.player.app-merged_res-45:/mipmap-anydpi-v26_ic_launcher_round.xml.flat",
+        "source": "com.medianexpo.player.app-main-47:/mipmap-anydpi-v26/ic_launcher_round.xml"
+    },
+    {
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
         "merged": "com.medianexpo.player.app-merged_res-45:/mipmap-anydpi-v26_ic_launcher.xml.flat",
         "source": "com.medianexpo.player.app-main-47:/mipmap-anydpi-v26/ic_launcher.xml"
     }

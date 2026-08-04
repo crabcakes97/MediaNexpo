@@ -79,11 +79,19 @@ color exo_error_message_background_color
 color exo_styled_error_message_background
 color exo_white
 color exo_white_opacity_70
+<<<<<<< HEAD
+=======
+color ic_launcher_background
+color mn_accent
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 color notification_action_color_filter
 color notification_icon_bg_color
 color notification_material_background_media_default_color
 color primary_text_default_material_dark
+<<<<<<< HEAD
 color purple_background
+=======
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 color secondary_text_default_material_dark
 color vector_tint_color
 color vector_tint_theme_color
@@ -235,6 +243,12 @@ drawable ic_call_answer_video
 drawable ic_call_answer_video_low
 drawable ic_call_decline
 drawable ic_call_decline_low
+<<<<<<< HEAD
+=======
+drawable ic_launcher
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 drawable ic_music_note
 drawable media3_icon_circular_play
 drawable media3_notification_pause
@@ -304,6 +318,12 @@ id androidx_compose_ui_view_composition_context
 id async
 id blocking
 id bottom
+<<<<<<< HEAD
+=======
+id btn_widget_next
+id btn_widget_play
+id btn_widget_prev
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 id cancel_action
 id center
 id chronometer
@@ -412,12 +432,21 @@ id text2
 id texture_view
 id time
 id title
+<<<<<<< HEAD
+=======
+id txt_widget_artist
+id txt_widget_title
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 id video_decoder_gl_surface_view
 id view_tree_lifecycle_owner
 id view_tree_on_back_pressed_dispatcher_owner
 id view_tree_saved_state_registry_owner
 id view_tree_view_model_store_owner
 id when_playing
+<<<<<<< HEAD
+=======
+id widget_container
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 id wrapped_composition_tag
 id zoom
 integer cancel_button_image_alpha
@@ -452,7 +481,13 @@ layout notification_template_media
 layout notification_template_media_custom
 layout notification_template_part_chronometer
 layout notification_template_part_time
+<<<<<<< HEAD
 mipmap ic_launcher
+=======
+layout widget_media
+mipmap ic_launcher
+mipmap ic_launcher_round
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 plurals exo_controls_fastforward_by_amount_description
 plurals exo_controls_rewind_by_amount_description
 string androidx_startup
@@ -657,3 +692,7 @@ styleable LegacyPlayerControlView ad_marker_color ad_marker_width bar_gravity ba
 styleable PlayerControlView ad_marker_color ad_marker_width animation_enabled bar_gravity bar_height buffered_color controller_layout_id played_ad_marker_color played_color repeat_toggle_modes scrubber_color scrubber_disabled_size scrubber_dragged_size scrubber_drawable scrubber_enabled_size show_fastforward_button show_next_button show_previous_button show_rewind_button show_shuffle_button show_subtitle_button show_timeout show_vr_button time_bar_min_update_interval touch_target_height unplayed_color
 styleable PlayerView ad_marker_color ad_marker_width animation_enabled artwork_display_mode auto_show bar_gravity bar_height buffered_color controller_layout_id default_artwork hide_during_ads hide_on_touch keep_content_on_player_reset played_ad_marker_color played_color player_layout_id repeat_toggle_modes resize_mode scrubber_color scrubber_disabled_size scrubber_dragged_size scrubber_drawable scrubber_enabled_size show_buffering show_shuffle_button show_subtitle_button show_timeout show_vr_button shutter_background_color surface_type time_bar_min_update_interval touch_target_height unplayed_color use_artwork use_controller
 styleable RecyclerView android_orientation android_clipToPadding android_descendantFocusability fastScrollEnabled fastScrollHorizontalThumbDrawable fastScrollHorizontalTrackDrawable fastScrollVerticalThumbDrawable fastScrollVerticalTrackDrawable layoutManager reverseLayout spanCount stackFromEnd
+<<<<<<< HEAD
+=======
+xml media_widget_info
+>>>>>>> 2c4ab1d (Initial commit after project recovery)

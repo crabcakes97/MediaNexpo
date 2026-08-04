@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+<<<<<<< HEAD
     <color name="purple_background">#1E1035</color>
+=======
+    <color name="ic_launcher_background">#1A0A2E</color>
+    <color name="mn_accent">#E0B0FF</color>
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 </resources>

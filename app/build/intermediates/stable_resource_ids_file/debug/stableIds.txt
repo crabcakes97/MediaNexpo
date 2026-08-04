@@ -154,6 +154,7 @@ com.medianexpo.player:integer/status_bar_notification_info_maxnum = 0x7f080003
 com.medianexpo.player:integer/exo_media_button_opacity_percentage_enabled = 0x7f080002
 com.medianexpo.player:integer/exo_media_button_opacity_percentage_disabled = 0x7f080001
 com.medianexpo.player:integer/cancel_button_image_alpha = 0x7f080000
+<<<<<<< HEAD
 com.medianexpo.player:id/when_playing = 0x7f07009e
 com.medianexpo.player:layout/notification_template_big_media_custom = 0x7f090012
 com.medianexpo.player:id/view_tree_saved_state_registry_owner = 0x7f07009c
@@ -253,6 +254,110 @@ com.medianexpo.player:style/ExoStyledControls.Button.Bottom.Shuffle = 0x7f0d0014
 com.medianexpo.player:style/ExoStyledControls = 0x7f0d0009
 com.medianexpo.player:id/center = 0x7f07002e
 com.medianexpo.player:id/cancel_action = 0x7f07002d
+=======
+com.medianexpo.player:id/when_playing = 0x7f0700a3
+com.medianexpo.player:layout/notification_template_big_media_custom = 0x7f090012
+com.medianexpo.player:id/view_tree_saved_state_registry_owner = 0x7f0700a1
+com.medianexpo.player:id/view_tree_on_back_pressed_dispatcher_owner = 0x7f0700a0
+com.medianexpo.player:string/bottom_sheet_collapse_description = 0x7f0c0002
+com.medianexpo.player:id/view_tree_lifecycle_owner = 0x7f07009f
+com.medianexpo.player:id/txt_widget_artist = 0x7f07009c
+com.medianexpo.player:id/title = 0x7f07009b
+com.medianexpo.player:id/texture_view = 0x7f070099
+com.medianexpo.player:id/tag_window_insets_animation_callback = 0x7f070096
+com.medianexpo.player:id/tag_state_description = 0x7f070092
+com.medianexpo.player:id/tag_screen_reader_focusable = 0x7f070091
+com.medianexpo.player:id/tag_accessibility_pane_title = 0x7f07008d
+com.medianexpo.player:id/tag_accessibility_heading = 0x7f07008c
+com.medianexpo.player:id/tag_accessibility_actions = 0x7f07008a
+com.medianexpo.player:string/date_picker_switch_to_previous_month = 0x7f0c0022
+com.medianexpo.player:id/surface_view = 0x7f070089
+com.medianexpo.player:id/status_bar_latest_event_content = 0x7f070088
+com.medianexpo.player:id/spherical_gl_surface_view = 0x7f070087
+com.medianexpo.player:string/exo_track_selection_auto = 0x7f0c005f
+com.medianexpo.player:id/right_side = 0x7f070086
+com.medianexpo.player:id/right_icon = 0x7f070085
+com.medianexpo.player:id/accessibility_custom_action_7 = 0x7f07001e
+com.medianexpo.player:id/one = 0x7f070082
+com.medianexpo.player:id/notification_main_column = 0x7f07007f
+com.medianexpo.player:id/notification_background = 0x7f07007e
+com.medianexpo.player:style/ExoStyledControls.TimeBar = 0x7f0d001c
+com.medianexpo.player:string/exo_controls_playback_speed = 0x7f0c0040
+com.medianexpo.player:drawable/media3_notification_seek_to_next = 0x7f05005e
+com.medianexpo.player:id/normal = 0x7f07007d
+com.medianexpo.player:layout/exo_player_control_ffwd_button = 0x7f090003
+com.medianexpo.player:attr/alpha = 0x7f020002
+com.medianexpo.player:id/none = 0x7f07007c
+com.medianexpo.player:id/line3 = 0x7f070078
+com.medianexpo.player:id/line1 = 0x7f070077
+com.medianexpo.player:attr/controller_layout_id = 0x7f02000a
+com.medianexpo.player:id/report_drawn = 0x7f070084
+com.medianexpo.player:style/ExoStyledControls.TimeText.Duration = 0x7f0d001e
+com.medianexpo.player:color/notification_action_color_filter = 0x7f03000e
+com.medianexpo.player:id/item_touch_helper_previous_elevation = 0x7f070076
+com.medianexpo.player:id/italic = 0x7f070075
+com.medianexpo.player:style/FloatingDialogTheme = 0x7f0d0021
+com.medianexpo.player:id/icon = 0x7f070070
+com.medianexpo.player:drawable/exo_ic_forward = 0x7f050006
+com.medianexpo.player:id/hide_in_inspector_tag = 0x7f07006f
+com.medianexpo.player:id/tag_unhandled_key_event_manager = 0x7f070094
+com.medianexpo.player:id/hide_ime_id = 0x7f07006e
+com.medianexpo.player:string/selected = 0x7f0c007a
+com.medianexpo.player:string/date_picker_title = 0x7f0c0024
+com.medianexpo.player:id/fixed_width = 0x7f07006c
+com.medianexpo.player:style/ExoStyledControls.Button.Bottom.RepeatToggle = 0x7f0d0012
+com.medianexpo.player:color/vector_tint_theme_color = 0x7f030014
+com.medianexpo.player:id/fit = 0x7f07006a
+com.medianexpo.player:id/exo_vr = 0x7f070068
+com.medianexpo.player:drawable/exo_notification_rewind = 0x7f050035
+com.medianexpo.player:id/exo_time = 0x7f070066
+com.medianexpo.player:dimen/compat_notification_large_icon_max_height = 0x7f040005
+com.medianexpo.player:id/exo_subtitles = 0x7f070064
+com.medianexpo.player:id/exo_shutter = 0x7f070061
+com.medianexpo.player:id/exo_rew_with_amount = 0x7f07005d
+com.medianexpo.player:string/exo_download_failed = 0x7f0c0051
+com.medianexpo.player:string/date_picker_no_selection_description = 0x7f0c001b
+com.medianexpo.player:id/exo_next = 0x7f07004f
+com.medianexpo.player:id/exo_rew = 0x7f07005c
+com.medianexpo.player:id/exo_position = 0x7f070057
+com.medianexpo.player:id/exo_progress = 0x7f070059
+com.medianexpo.player:id/exo_play = 0x7f070054
+com.medianexpo.player:style/ExoStyledControls.TimeText.Separator = 0x7f0d0020
+com.medianexpo.player:id/exo_overflow_show = 0x7f070051
+com.medianexpo.player:id/exo_pause = 0x7f070053
+com.medianexpo.player:id/exo_overflow_hide = 0x7f070050
+com.medianexpo.player:id/exo_minimal_fullscreen = 0x7f07004e
+com.medianexpo.player:id/exo_main_text = 0x7f07004c
+com.medianexpo.player:attr/fastScrollVerticalTrackDrawable = 0x7f020010
+com.medianexpo.player:id/exo_icon = 0x7f07004b
+com.medianexpo.player:string/time_picker_minute_text_field = 0x7f0c008a
+com.medianexpo.player:drawable/exo_styled_controls_speed = 0x7f05004b
+com.medianexpo.player:id/exo_fullscreen = 0x7f07004a
+com.medianexpo.player:id/exo_ffwd = 0x7f070048
+com.medianexpo.player:string/date_picker_switch_to_year_selection = 0x7f0c0023
+com.medianexpo.player:string/bottom_sheet_expand_description = 0x7f0c0005
+com.medianexpo.player:id/exo_extra_controls = 0x7f070046
+com.medianexpo.player:dimen/exo_small_icon_horizontal_margin = 0x7f04001b
+com.medianexpo.player:id/exo_error_message = 0x7f070045
+com.medianexpo.player:string/date_picker_scroll_to_earlier_years = 0x7f0c001c
+com.medianexpo.player:id/exo_duration = 0x7f070044
+com.medianexpo.player:id/exo_controller_placeholder = 0x7f070042
+com.medianexpo.player:style/TextAppearance.Compat.Notification.Info.Media = 0x7f0d0025
+com.medianexpo.player:id/exo_check = 0x7f07003f
+com.medianexpo.player:id/exo_audio_track = 0x7f07003a
+com.medianexpo.player:id/exo_artwork = 0x7f070039
+com.medianexpo.player:id/accessibility_custom_action_1 = 0x7f070002
+com.medianexpo.player:id/exo_ad_overlay = 0x7f070038
+com.medianexpo.player:id/edit_text_id = 0x7f070036
+com.medianexpo.player:drawable/exo_styled_controls_fastforward = 0x7f05003b
+com.medianexpo.player:id/consume_window_insets_tag = 0x7f070034
+com.medianexpo.player:style/ExoStyledControls.Button.Bottom.Shuffle = 0x7f0d0014
+com.medianexpo.player:style/ExoStyledControls = 0x7f0d0009
+com.medianexpo.player:id/center = 0x7f070031
+com.medianexpo.player:attr/fontProviderFetchTimeout = 0x7f020015
+com.medianexpo.player:id/btn_widget_play = 0x7f07002e
+com.medianexpo.player:id/btn_widget_next = 0x7f07002d
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:id/async = 0x7f07002a
 com.medianexpo.player:string/media3_controls_seek_to_next_description = 0x7f0c0071
 com.medianexpo.player:id/always = 0x7f070028
@@ -260,11 +365,16 @@ com.medianexpo.player:id/all = 0x7f070027
 com.medianexpo.player:dimen/notification_media_narrow_margin = 0x7f040037
 com.medianexpo.player:id/action_text = 0x7f070025
 com.medianexpo.player:layout/exo_track_selection_dialog = 0x7f09000a
+<<<<<<< HEAD
 com.medianexpo.player:drawable/notification_tile_bg = 0x7f05006a
+=======
+com.medianexpo.player:drawable/notification_tile_bg = 0x7f05006d
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:id/action_image = 0x7f070024
 com.medianexpo.player:dimen/item_touch_helper_swipe_escape_velocity = 0x7f04002f
 com.medianexpo.player:id/action_container = 0x7f070022
 com.medianexpo.player:string/date_input_invalid_year_range = 0x7f0c0014
+<<<<<<< HEAD
 com.medianexpo.player:color/vector_tint_color = 0x7f030012
 com.medianexpo.player:dimen/exo_media_button_width = 0x7f040012
 com.medianexpo.player:id/accessibility_custom_action_9 = 0x7f070020
@@ -272,6 +382,15 @@ com.medianexpo.player:string/exo_controls_fastforward_description = 0x7f0c0037
 com.medianexpo.player:id/exo_overlay = 0x7f07004f
 com.medianexpo.player:id/accessibility_custom_action_6 = 0x7f07001d
 com.medianexpo.player:id/exo_settings = 0x7f07005b
+=======
+com.medianexpo.player:color/vector_tint_color = 0x7f030013
+com.medianexpo.player:dimen/exo_media_button_width = 0x7f040012
+com.medianexpo.player:id/accessibility_custom_action_9 = 0x7f070020
+com.medianexpo.player:string/exo_controls_fastforward_description = 0x7f0c0037
+com.medianexpo.player:id/exo_overlay = 0x7f070052
+com.medianexpo.player:id/accessibility_custom_action_6 = 0x7f07001d
+com.medianexpo.player:id/exo_settings = 0x7f07005e
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:string/exo_track_selection_title_video = 0x7f0c0063
 com.medianexpo.player:id/accessibility_custom_action_5 = 0x7f07001c
 com.medianexpo.player:id/accessibility_custom_action_30 = 0x7f070019
@@ -290,6 +409,7 @@ com.medianexpo.player:id/accessibility_custom_action_16 = 0x7f070009
 com.medianexpo.player:dimen/compat_control_corner_material = 0x7f040004
 com.medianexpo.player:dimen/compat_button_padding_vertical_material = 0x7f040003
 com.medianexpo.player:id/accessibility_custom_action_15 = 0x7f070008
+<<<<<<< HEAD
 com.medianexpo.player:id/inspection_slot_table_set = 0x7f070070
 com.medianexpo.player:id/accessibility_custom_action_12 = 0x7f070005
 com.medianexpo.player:dimen/notification_small_icon_size_as_large = 0x7f04003b
@@ -314,20 +434,64 @@ com.medianexpo.player:id/tag_transition_group = 0x7f070090
 com.medianexpo.player:id/accessibility_custom_action_25 = 0x7f070013
 com.medianexpo.player:drawable/media3_icon_circular_play = 0x7f050056
 com.medianexpo.player:drawable/ic_music_note = 0x7f050055
+=======
+com.medianexpo.player:id/inspection_slot_table_set = 0x7f070073
+com.medianexpo.player:id/accessibility_custom_action_12 = 0x7f070005
+com.medianexpo.player:dimen/notification_small_icon_size_as_large = 0x7f04003b
+com.medianexpo.player:font/roboto_medium_numbers = 0x7f060000
+com.medianexpo.player:id/exo_minimal_controls = 0x7f07004d
+com.medianexpo.player:drawable/notification_bg_normal_pressed = 0x7f050068
+com.medianexpo.player:drawable/notification_bg_normal = 0x7f050067
+com.medianexpo.player:attr/show_vr_button = 0x7f020038
+com.medianexpo.player:drawable/media3_notification_seek_back = 0x7f05005c
+com.medianexpo.player:drawable/notification_bg_low_pressed = 0x7f050066
+com.medianexpo.player:drawable/notification_action_background = 0x7f050062
+com.medianexpo.player:drawable/media_session_service_notification_ic_music_note = 0x7f050061
+com.medianexpo.player:id/exo_buffering = 0x7f07003d
+com.medianexpo.player:id/tag_accessibility_clickable_spans = 0x7f07008b
+com.medianexpo.player:drawable/exo_legacy_controls_shuffle_on = 0x7f05002e
+com.medianexpo.player:id/action0 = 0x7f070021
+com.medianexpo.player:drawable/exo_ic_rewind = 0x7f05000b
+com.medianexpo.player:id/accessibility_custom_action_3 = 0x7f070018
+com.medianexpo.player:drawable/media3_notification_small_icon = 0x7f050060
+com.medianexpo.player:string/exo_controls_play_description = 0x7f0c003f
+com.medianexpo.player:drawable/media3_notification_seek_to_previous = 0x7f05005f
+com.medianexpo.player:layout/widget_media = 0x7f09001c
+com.medianexpo.player:drawable/ic_music_note = 0x7f050058
+com.medianexpo.player:string/exo_download_removing = 0x7f0c0056
+com.medianexpo.player:string/exo_controls_settings_description = 0x7f0c0047
+com.medianexpo.player:id/tag_transition_group = 0x7f070093
+com.medianexpo.player:id/accessibility_custom_action_25 = 0x7f070013
+com.medianexpo.player:drawable/media3_icon_circular_play = 0x7f050059
+com.medianexpo.player:drawable/ic_launcher_foreground = 0x7f050057
+com.medianexpo.player:id/exo_extra_controls_scroll_view = 0x7f070047
+com.medianexpo.player:dimen/exo_settings_height = 0x7f040014
+com.medianexpo.player:dimen/exo_error_message_margin_bottom = 0x7f040008
+com.medianexpo.player:drawable/exo_icon_play = 0x7f050018
+com.medianexpo.player:drawable/ic_launcher_background = 0x7f050056
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:id/accessibility_custom_action_29 = 0x7f070017
 com.medianexpo.player:drawable/exo_icon_previous = 0x7f050019
 com.medianexpo.player:drawable/ic_call_decline = 0x7f050053
 com.medianexpo.player:id/accessibility_custom_action_20 = 0x7f07000e
 com.medianexpo.player:string/exo_controls_repeat_off_description = 0x7f0c0043
 com.medianexpo.player:drawable/ic_call_answer_video_low = 0x7f050052
+<<<<<<< HEAD
 com.medianexpo.player:id/forever = 0x7f07006a
 com.medianexpo.player:drawable/ic_call_answer_video = 0x7f050051
+=======
+com.medianexpo.player:color/ic_launcher_background = 0x7f03000c
+com.medianexpo.player:id/forever = 0x7f07006d
+com.medianexpo.player:drawable/ic_call_answer_video = 0x7f050051
+com.medianexpo.player:id/widget_container = 0x7f0700a4
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:dimen/exo_styled_progress_bar_height = 0x7f040024
 com.medianexpo.player:id/accessibility_custom_action_31 = 0x7f07001a
 com.medianexpo.player:drawable/ic_call_answer_low = 0x7f050050
 com.medianexpo.player:drawable/exo_legacy_controls_next = 0x7f050025
 com.medianexpo.player:drawable/ic_call_answer = 0x7f05004f
 com.medianexpo.player:drawable/exo_styled_controls_subtitle_off = 0x7f05004c
+<<<<<<< HEAD
 com.medianexpo.player:id/off = 0x7f07007e
 com.medianexpo.player:drawable/exo_styled_controls_shuffle_on = 0x7f05004a
 com.medianexpo.player:string/exo_controls_repeat_one_description = 0x7f0c0044
@@ -342,6 +506,21 @@ com.medianexpo.player:drawable/exo_styled_controls_repeat_all = 0x7f050044
 com.medianexpo.player:drawable/exo_styled_controls_pause = 0x7f050041
 com.medianexpo.player:id/media_actions = 0x7f070076
 com.medianexpo.player:id/info = 0x7f07006f
+=======
+com.medianexpo.player:id/off = 0x7f070081
+com.medianexpo.player:drawable/exo_styled_controls_shuffle_on = 0x7f05004a
+com.medianexpo.player:string/exo_controls_repeat_one_description = 0x7f0c0044
+com.medianexpo.player:id/blocking = 0x7f07002b
+com.medianexpo.player:id/never = 0x7f07007b
+com.medianexpo.player:drawable/exo_styled_controls_rewind = 0x7f050047
+com.medianexpo.player:string/time_picker_minute = 0x7f0c0087
+com.medianexpo.player:drawable/exo_styled_controls_repeat_off = 0x7f050045
+com.medianexpo.player:id/exo_controller = 0x7f070041
+com.medianexpo.player:drawable/exo_styled_controls_repeat_all = 0x7f050044
+com.medianexpo.player:drawable/exo_styled_controls_pause = 0x7f050041
+com.medianexpo.player:id/media_actions = 0x7f070079
+com.medianexpo.player:id/info = 0x7f070072
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:drawable/exo_styled_controls_overflow_show = 0x7f050040
 com.medianexpo.player:string/date_picker_switch_to_input_mode = 0x7f0c0020
 com.medianexpo.player:drawable/exo_icon_next = 0x7f050016
@@ -350,7 +529,11 @@ com.medianexpo.player:string/tooltip_pane_description = 0x7f0c008e
 com.medianexpo.player:drawable/exo_styled_controls_fullscreen_enter = 0x7f05003c
 com.medianexpo.player:string/date_picker_switch_to_calendar_mode = 0x7f0c001e
 com.medianexpo.player:attr/unplayed_color = 0x7f020040
+<<<<<<< HEAD
 com.medianexpo.player:id/chronometer = 0x7f07002f
+=======
+com.medianexpo.player:id/chronometer = 0x7f070032
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:attr/fontProviderSystemFontFamily = 0x7f020018
 com.medianexpo.player:drawable/exo_styled_controls_check = 0x7f05003a
 com.medianexpo.player:string/default_error_message = 0x7f0c002f
@@ -360,6 +543,7 @@ com.medianexpo.player:string/exo_track_resolution = 0x7f0c005a
 com.medianexpo.player:drawable/exo_notification_stop = 0x7f050037
 com.medianexpo.player:drawable/exo_notification_small_icon = 0x7f050036
 com.medianexpo.player:style/ExoMediaButton = 0x7f0d0001
+<<<<<<< HEAD
 com.medianexpo.player:id/pooling_container_listener_holder_tag = 0x7f070080
 com.medianexpo.player:drawable/exo_notification_pause = 0x7f050032
 com.medianexpo.player:dimen/notification_top_pad = 0x7f04003d
@@ -372,24 +556,57 @@ com.medianexpo.player:attr/played_ad_marker_color = 0x7f020022
 com.medianexpo.player:drawable/exo_legacy_controls_vr = 0x7f05002f
 com.medianexpo.player:attr/fontProviderFetchStrategy = 0x7f020014
 com.medianexpo.player:id/fixed_height = 0x7f070068
+=======
+com.medianexpo.player:id/pooling_container_listener_holder_tag = 0x7f070083
+com.medianexpo.player:drawable/exo_notification_pause = 0x7f050032
+com.medianexpo.player:dimen/notification_top_pad = 0x7f04003d
+com.medianexpo.player:id/end_padder = 0x7f070037
+com.medianexpo.player:id/bottom = 0x7f07002c
+com.medianexpo.player:style/ExoStyledControls.TimeText = 0x7f0d001d
+com.medianexpo.player:id/tag_unhandled_key_listeners = 0x7f070095
+com.medianexpo.player:drawable/exo_notification_next = 0x7f050031
+com.medianexpo.player:attr/played_ad_marker_color = 0x7f020022
+com.medianexpo.player:drawable/exo_legacy_controls_vr = 0x7f05002f
+com.medianexpo.player:string/exo_controls_stop_description = 0x7f0c004b
+com.medianexpo.player:id/actions = 0x7f070026
+com.medianexpo.player:string/time_picker_hour = 0x7f0c0082
+com.medianexpo.player:string/call_notification_screening_text = 0x7f0c000c
+com.medianexpo.player:drawable/exo_legacy_controls_shuffle_off = 0x7f05002d
+com.medianexpo.player:attr/fontProviderFetchStrategy = 0x7f020014
+com.medianexpo.player:id/fixed_height = 0x7f07006b
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:dimen/notification_action_icon_size = 0x7f040030
 com.medianexpo.player:drawable/exo_legacy_controls_repeat_all = 0x7f050029
 com.medianexpo.player:drawable/exo_legacy_controls_pause = 0x7f050026
 com.medianexpo.player:attr/fontVariationSettings = 0x7f02001a
+<<<<<<< HEAD
 com.medianexpo.player:id/media_controller_compat_view_tag = 0x7f070077
 com.medianexpo.player:drawable/exo_icon_stop = 0x7f050020
 com.medianexpo.player:string/snackbar_dismiss = 0x7f0c007b
 com.medianexpo.player:attr/scrubber_disabled_size = 0x7f02002b
 com.medianexpo.player:id/exo_prev = 0x7f070055
 com.medianexpo.player:id/exo_controls_background = 0x7f070040
+=======
+com.medianexpo.player:id/media_controller_compat_view_tag = 0x7f07007a
+com.medianexpo.player:drawable/exo_icon_stop = 0x7f050020
+com.medianexpo.player:string/snackbar_dismiss = 0x7f0c007b
+com.medianexpo.player:attr/scrubber_disabled_size = 0x7f02002b
+com.medianexpo.player:id/exo_prev = 0x7f070058
+com.medianexpo.player:id/exo_controls_background = 0x7f070043
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:drawable/exo_notification_previous = 0x7f050034
 com.medianexpo.player:string/exo_track_role_supplementary = 0x7f0c005e
 com.medianexpo.player:layout/notification_media_cancel_action = 0x7f090010
 com.medianexpo.player:attr/nestedScrollViewStyle = 0x7f020021
+<<<<<<< HEAD
+=======
+com.medianexpo.player:id/txt_widget_title = 0x7f07009d
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:drawable/exo_legacy_controls_fullscreen_exit = 0x7f050024
 com.medianexpo.player:drawable/exo_icon_shuffle_off = 0x7f05001e
 com.medianexpo.player:string/close_drawer = 0x7f0c000d
 com.medianexpo.player:attr/scrubber_drawable = 0x7f02002d
+<<<<<<< HEAD
 com.medianexpo.player:id/wrapped_composition_tag = 0x7f07009f
 com.medianexpo.player:drawable/exo_icon_vr = 0x7f050021
 com.medianexpo.player:attr/fontProviderQuery = 0x7f020017
@@ -406,6 +623,23 @@ com.medianexpo.player:drawable/exo_icon_pause = 0x7f050017
 com.medianexpo.player:dimen/fastscroll_default_thickness = 0x7f04002a
 com.medianexpo.player:dimen/compat_notification_large_icon_max_width = 0x7f040006
 com.medianexpo.player:id/exo_center_controls = 0x7f07003b
+=======
+com.medianexpo.player:id/wrapped_composition_tag = 0x7f0700a5
+com.medianexpo.player:drawable/exo_icon_vr = 0x7f050021
+com.medianexpo.player:attr/fontProviderQuery = 0x7f020017
+com.medianexpo.player:id/notification_main_column_container = 0x7f070080
+com.medianexpo.player:drawable/exo_icon_repeat_one = 0x7f05001c
+com.medianexpo.player:drawable/exo_icon_repeat_all = 0x7f05001a
+com.medianexpo.player:id/exo_track_selection_view = 0x7f070067
+com.medianexpo.player:id/btn_widget_prev = 0x7f07002f
+com.medianexpo.player:drawable/notification_bg_low = 0x7f050064
+com.medianexpo.player:drawable/exo_icon_shuffle_on = 0x7f05001f
+com.medianexpo.player:drawable/ic_launcher = 0x7f050055
+com.medianexpo.player:drawable/exo_icon_pause = 0x7f050017
+com.medianexpo.player:dimen/fastscroll_default_thickness = 0x7f04002a
+com.medianexpo.player:dimen/compat_notification_large_icon_max_width = 0x7f040006
+com.medianexpo.player:id/exo_center_controls = 0x7f07003e
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:drawable/exo_icon_fullscreen_exit = 0x7f050015
 com.medianexpo.player:drawable/exo_icon_fullscreen_enter = 0x7f050014
 com.medianexpo.player:string/search_bar_search = 0x7f0c0079
@@ -413,6 +647,7 @@ com.medianexpo.player:string/exo_controls_cc_disabled_description = 0x7f0c0034
 com.medianexpo.player:attr/surface_type = 0x7f02003c
 com.medianexpo.player:drawable/exo_ic_subtitle_on = 0x7f050011
 com.medianexpo.player:drawable/exo_ic_speed = 0x7f05000f
+<<<<<<< HEAD
 com.medianexpo.player:id/view_tree_view_model_store_owner = 0x7f07009d
 com.medianexpo.player:drawable/exo_ic_skip_previous = 0x7f05000e
 com.medianexpo.player:string/date_input_invalid_for_pattern = 0x7f0c0012
@@ -427,12 +662,32 @@ com.medianexpo.player:drawable/exo_ic_chevron_left = 0x7f050003
 com.medianexpo.player:id/tag_on_receive_content_mime_types = 0x7f07008d
 com.medianexpo.player:drawable/exo_ic_audiotrack = 0x7f050001
 com.medianexpo.player:id/exo_playback_speed = 0x7f070053
+=======
+com.medianexpo.player:id/view_tree_view_model_store_owner = 0x7f0700a2
+com.medianexpo.player:drawable/exo_ic_skip_previous = 0x7f05000e
+com.medianexpo.player:string/date_input_invalid_for_pattern = 0x7f0c0012
+com.medianexpo.player:id/exo_text = 0x7f070065
+com.medianexpo.player:drawable/exo_ic_play_circle_filled = 0x7f05000a
+com.medianexpo.player:id/text = 0x7f070097
+com.medianexpo.player:attr/keep_content_on_player_reset = 0x7f02001e
+com.medianexpo.player:drawable/media3_notification_seek_forward = 0x7f05005d
+com.medianexpo.player:string/exo_track_role_closed_captions = 0x7f0c005c
+com.medianexpo.player:drawable/exo_ic_chevron_right = 0x7f050004
+com.medianexpo.player:drawable/exo_ic_chevron_left = 0x7f050003
+com.medianexpo.player:id/tag_on_receive_content_mime_types = 0x7f070090
+com.medianexpo.player:drawable/exo_ic_audiotrack = 0x7f050001
+com.medianexpo.player:id/exo_playback_speed = 0x7f070056
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:drawable/exo_edit_mode_logo = 0x7f050000
 com.medianexpo.player:drawable/exo_ic_fullscreen_enter = 0x7f050007
 com.medianexpo.player:dimen/notification_top_pad_large_text = 0x7f04003e
 com.medianexpo.player:drawable/exo_ic_check = 0x7f050002
 com.medianexpo.player:attr/fontStyle = 0x7f020019
+<<<<<<< HEAD
 com.medianexpo.player:id/exo_bottom_bar = 0x7f070039
+=======
+com.medianexpo.player:id/exo_bottom_bar = 0x7f07003c
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:dimen/notification_right_side_padding_top = 0x7f040039
 com.medianexpo.player:drawable/exo_legacy_controls_previous = 0x7f050028
 com.medianexpo.player:dimen/notification_right_icon_size = 0x7f040038
@@ -451,6 +706,7 @@ com.medianexpo.player:dimen/fastscroll_margin = 0x7f04002b
 com.medianexpo.player:dimen/exo_styled_progress_touch_target_height = 0x7f040029
 com.medianexpo.player:style/ExoStyledControls.Button.Bottom.FullScreen = 0x7f0d000e
 com.medianexpo.player:dimen/notification_small_icon_background_padding = 0x7f04003a
+<<<<<<< HEAD
 com.medianexpo.player:id/exo_progress_placeholder = 0x7f070057
 com.medianexpo.player:attr/buffered_color = 0x7f020009
 com.medianexpo.player:id/text2 = 0x7f070095
@@ -464,22 +720,48 @@ com.medianexpo.player:dimen/exo_small_icon_height = 0x7f04001a
 com.medianexpo.player:attr/ad_marker_width = 0x7f020001
 com.medianexpo.player:dimen/exo_styled_bottom_bar_margin_top = 0x7f040020
 com.medianexpo.player:id/exo_basic_controls = 0x7f070038
+=======
+com.medianexpo.player:id/exo_progress_placeholder = 0x7f07005a
+com.medianexpo.player:attr/buffered_color = 0x7f020009
+com.medianexpo.player:id/text2 = 0x7f070098
+com.medianexpo.player:dimen/exo_styled_minimal_controls_margin_bottom = 0x7f040023
+com.medianexpo.player:style/TextAppearance.Compat.Notification.Media = 0x7f0d0028
+com.medianexpo.player:id/exo_content_frame = 0x7f070040
+com.medianexpo.player:drawable/exo_styled_controls_repeat_one = 0x7f050046
+com.medianexpo.player:dimen/exo_small_icon_width = 0x7f04001e
+com.medianexpo.player:id/video_decoder_gl_surface_view = 0x7f07009e
+com.medianexpo.player:dimen/exo_small_icon_height = 0x7f04001a
+com.medianexpo.player:attr/ad_marker_width = 0x7f020001
+com.medianexpo.player:dimen/exo_styled_bottom_bar_margin_top = 0x7f040020
+com.medianexpo.player:id/exo_basic_controls = 0x7f07003b
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:dimen/exo_styled_controls_padding = 0x7f040022
 com.medianexpo.player:dimen/notification_large_icon_height = 0x7f040034
 com.medianexpo.player:dimen/exo_small_icon_padding_horizontal = 0x7f04001c
 com.medianexpo.player:string/time_picker_am = 0x7f0c0081
 com.medianexpo.player:id/accessibility_custom_action_11 = 0x7f070004
+<<<<<<< HEAD
 com.medianexpo.player:id/exo_settings_listview = 0x7f07005c
 com.medianexpo.player:dimen/item_touch_helper_max_drag_scroll_per_frame = 0x7f04002d
 com.medianexpo.player:dimen/exo_settings_offset = 0x7f040017
 com.medianexpo.player:drawable/notification_oversize_large_icon_bg = 0x7f050067
+=======
+com.medianexpo.player:id/exo_settings_listview = 0x7f07005f
+com.medianexpo.player:dimen/item_touch_helper_max_drag_scroll_per_frame = 0x7f04002d
+com.medianexpo.player:dimen/exo_settings_offset = 0x7f040017
+com.medianexpo.player:drawable/notification_oversize_large_icon_bg = 0x7f05006a
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:drawable/exo_legacy_controls_fastforward = 0x7f050022
 com.medianexpo.player:color/androidx_core_ripple_material_light = 0x7f030000
 com.medianexpo.player:attr/reverseLayout = 0x7f020029
 com.medianexpo.player:dimen/notification_content_margin_start = 0x7f040033
 com.medianexpo.player:drawable/ic_call_decline_low = 0x7f050054
 com.medianexpo.player:drawable/exo_icon_circular_play = 0x7f050012
+<<<<<<< HEAD
 com.medianexpo.player:id/time = 0x7f070097
+=======
+com.medianexpo.player:id/time = 0x7f07009a
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:dimen/exo_settings_icon_size = 0x7f040015
 com.medianexpo.player:color/exo_white = 0x7f03000a
 com.medianexpo.player:drawable/exo_icon_rewind = 0x7f05001d
@@ -487,6 +769,10 @@ com.medianexpo.player:attr/scrubber_color = 0x7f02002a
 com.medianexpo.player:dimen/exo_icon_text_size = 0x7f040010
 com.medianexpo.player:string/date_picker_headline = 0x7f0c0018
 com.medianexpo.player:string/date_input_title = 0x7f0c0017
+<<<<<<< HEAD
+=======
+com.medianexpo.player:mipmap/ic_launcher_round = 0x7f0a0001
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:drawable/exo_ic_skip_next = 0x7f05000d
 com.medianexpo.player:drawable/exo_icon_repeat_off = 0x7f05001b
 com.medianexpo.player:dimen/exo_settings_main_text_size = 0x7f040016
@@ -497,17 +783,28 @@ com.medianexpo.player:drawable/exo_styled_controls_audiotrack = 0x7f050039
 com.medianexpo.player:dimen/notification_action_text_size = 0x7f040031
 com.medianexpo.player:string/off = 0x7f0c0075
 com.medianexpo.player:dimen/exo_icon_horizontal_margin = 0x7f04000c
+<<<<<<< HEAD
+=======
+com.medianexpo.player:string/date_input_label = 0x7f0c0015
+com.medianexpo.player:drawable/exo_ic_default_album_image = 0x7f050005
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:string/navigation_menu = 0x7f0c0073
 com.medianexpo.player:dimen/exo_icon_padding = 0x7f04000d
 com.medianexpo.player:attr/show_previous_button = 0x7f020033
 com.medianexpo.player:attr/show_fastforward_button = 0x7f020031
+<<<<<<< HEAD
 com.medianexpo.player:drawable/notification_bg_low_normal = 0x7f050062
+=======
+com.medianexpo.player:xml/media_widget_info = 0x7f0f0000
+com.medianexpo.player:drawable/notification_bg_low_normal = 0x7f050065
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:drawable/exo_legacy_controls_repeat_off = 0x7f05002a
 com.medianexpo.player:color/exo_edit_mode_background_color = 0x7f030007
 com.medianexpo.player:drawable/exo_legacy_controls_fullscreen_enter = 0x7f050023
 com.medianexpo.player:string/time_picker_minute_suffix = 0x7f0c0089
 com.medianexpo.player:attr/show_timeout = 0x7f020037
 com.medianexpo.player:id/accessibility_custom_action_14 = 0x7f070007
+<<<<<<< HEAD
 com.medianexpo.player:string/date_input_label = 0x7f0c0015
 com.medianexpo.player:drawable/exo_ic_default_album_image = 0x7f050005
 com.medianexpo.player:dimen/exo_styled_progress_margin_bottom = 0x7f040028
@@ -538,11 +835,48 @@ com.medianexpo.player:color/exo_bottom_bar_background = 0x7f030006
 com.medianexpo.player:string/exo_track_surround = 0x7f0c0065
 com.medianexpo.player:drawable/notification_template_icon_low_bg = 0x7f050069
 com.medianexpo.player:attr/fontProviderFetchTimeout = 0x7f020015
+=======
+com.medianexpo.player:dimen/exo_styled_progress_margin_bottom = 0x7f040028
+com.medianexpo.player:drawable/notification_bg = 0x7f050063
+com.medianexpo.player:attr/played_color = 0x7f020023
+com.medianexpo.player:dimen/compat_button_padding_horizontal_material = 0x7f040002
+com.medianexpo.player:drawable/exo_ic_pause_circle_filled = 0x7f050009
+com.medianexpo.player:drawable/media3_notification_pause = 0x7f05005a
+com.medianexpo.player:color/primary_text_default_material_dark = 0x7f030011
+com.medianexpo.player:id/exo_play_pause = 0x7f070055
+com.medianexpo.player:attr/touch_target_height = 0x7f02003e
+com.medianexpo.player:drawable/notify_panel_notification_icon_bg = 0x7f05006e
+com.medianexpo.player:dimen/exo_setting_width = 0x7f040013
+com.medianexpo.player:id/accessibility_action_clickable_span = 0x7f070000
+com.medianexpo.player:drawable/notification_icon_background = 0x7f050069
+com.medianexpo.player:dimen/notification_large_icon_width = 0x7f040035
+com.medianexpo.player:attr/fontProviderCerts = 0x7f020013
+com.medianexpo.player:style/ExoStyledControls.Button.Center.PlayPause = 0x7f0d0019
+com.medianexpo.player:id/icon_group = 0x7f070071
+com.medianexpo.player:id/exo_subtitle = 0x7f070063
+com.medianexpo.player:dimen/exo_error_message_text_padding_vertical = 0x7f04000a
+com.medianexpo.player:id/tag_on_apply_window_listener = 0x7f07008e
+com.medianexpo.player:drawable/notification_template_icon_bg = 0x7f05006b
+com.medianexpo.player:color/notification_icon_bg_color = 0x7f03000f
+com.medianexpo.player:attr/scrubber_dragged_size = 0x7f02002c
+com.medianexpo.player:color/exo_bottom_bar_background = 0x7f030006
+com.medianexpo.player:string/exo_track_surround = 0x7f0c0065
+com.medianexpo.player:drawable/notification_template_icon_low_bg = 0x7f05006c
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:styleable/PlayerView = 0x7f0e000a
 com.medianexpo.player:drawable/exo_styled_controls_previous = 0x7f050043
 com.medianexpo.player:drawable/exo_styled_controls_fullscreen_exit = 0x7f05003d
 com.medianexpo.player:color/exo_black_opacity_60 = 0x7f030004
+<<<<<<< HEAD
 com.medianexpo.player:id/status_bar_latest_event_content = 0x7f070085
+=======
+com.medianexpo.player:drawable/exo_icon_fastforward = 0x7f050013
+com.medianexpo.player:drawable/exo_ic_subtitle_off = 0x7f050010
+com.medianexpo.player:id/accessibility_custom_action_2 = 0x7f07000d
+com.medianexpo.player:attr/fastScrollHorizontalTrackDrawable = 0x7f02000e
+com.medianexpo.player:id/cancel_action = 0x7f070030
+com.medianexpo.player:color/mn_accent = 0x7f03000d
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:string/exo_controls_fullscreen_enter_description = 0x7f0c0038
 com.medianexpo.player:attr/time_bar_min_update_interval = 0x7f02003d
 com.medianexpo.player:color/call_notification_decline_color = 0x7f030003
@@ -555,6 +889,7 @@ com.medianexpo.player:attr/use_controller = 0x7f020042
 com.medianexpo.player:attr/use_artwork = 0x7f020041
 com.medianexpo.player:attr/default_artwork = 0x7f02000b
 com.medianexpo.player:dimen/compat_button_inset_vertical_material = 0x7f040001
+<<<<<<< HEAD
 com.medianexpo.player:id/tag_on_receive_content_listener = 0x7f07008c
 com.medianexpo.player:color/secondary_text_default_material_dark = 0x7f030011
 com.medianexpo.player:attr/fastScrollEnabled = 0x7f02000c
@@ -565,6 +900,18 @@ com.medianexpo.player:dimen/fastscroll_minimum_range = 0x7f04002c
 com.medianexpo.player:attr/ttcIndex = 0x7f02003f
 com.medianexpo.player:dimen/exo_small_icon_padding_vertical = 0x7f04001d
 com.medianexpo.player:drawable/media3_notification_play = 0x7f050058
+=======
+com.medianexpo.player:id/tag_on_receive_content_listener = 0x7f07008f
+com.medianexpo.player:color/secondary_text_default_material_dark = 0x7f030012
+com.medianexpo.player:attr/fastScrollEnabled = 0x7f02000c
+com.medianexpo.player:style/TextAppearance.Compat.Notification.Title.Media = 0x7f0d002c
+com.medianexpo.player:id/exo_shuffle = 0x7f070060
+com.medianexpo.player:id/zoom = 0x7f0700a6
+com.medianexpo.player:dimen/fastscroll_minimum_range = 0x7f04002c
+com.medianexpo.player:attr/ttcIndex = 0x7f02003f
+com.medianexpo.player:dimen/exo_small_icon_padding_vertical = 0x7f04001d
+com.medianexpo.player:drawable/media3_notification_play = 0x7f05005b
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:dimen/compat_button_inset_horizontal_material = 0x7f040000
 com.medianexpo.player:id/accessibility_custom_action_19 = 0x7f07000c
 com.medianexpo.player:attr/auto_show = 0x7f020005
@@ -577,7 +924,11 @@ com.medianexpo.player:id/accessibility_custom_action_22 = 0x7f070010
 com.medianexpo.player:attr/scrubber_enabled_size = 0x7f02002e
 com.medianexpo.player:string/exo_controls_shuffle_on_description = 0x7f0c004a
 com.medianexpo.player:attr/shutter_background_color = 0x7f020039
+<<<<<<< HEAD
 com.medianexpo.player:id/is_pooling_container_tag = 0x7f070071
+=======
+com.medianexpo.player:id/is_pooling_container_tag = 0x7f070074
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:drawable/exo_styled_controls_settings = 0x7f050048
 com.medianexpo.player:string/call_notification_hang_up_action = 0x7f0c0009
 com.medianexpo.player:drawable/exo_notification_play = 0x7f050033
@@ -588,9 +939,13 @@ com.medianexpo.player:id/androidx_compose_ui_view_composition_context = 0x7f0700
 com.medianexpo.player:dimen/exo_media_button_height = 0x7f040011
 com.medianexpo.player:attr/show_shuffle_button = 0x7f020035
 com.medianexpo.player:drawable/exo_legacy_controls_repeat_one = 0x7f05002b
+<<<<<<< HEAD
 com.medianexpo.player:id/right_icon = 0x7f070082
 com.medianexpo.player:dimen/notification_subtext_size = 0x7f04003c
 com.medianexpo.player:id/tag_accessibility_actions = 0x7f070087
+=======
+com.medianexpo.player:dimen/notification_subtext_size = 0x7f04003c
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:attr/shortcutMatchRequired = 0x7f02002f
 com.medianexpo.player:attr/spanCount = 0x7f02003a
 com.medianexpo.player:drawable/exo_styled_controls_vr = 0x7f05004e
@@ -605,6 +960,7 @@ com.medianexpo.player:attr/artwork_display_mode = 0x7f020004
 com.medianexpo.player:attr/lStar = 0x7f02001f
 com.medianexpo.player:attr/fastScrollVerticalThumbDrawable = 0x7f02000f
 com.medianexpo.player:style/ExoStyledControls.Button.Center = 0x7f0d0016
+<<<<<<< HEAD
 com.medianexpo.player:color/notification_material_background_media_default_color = 0x7f03000e
 com.medianexpo.player:layout/notification_template_icon_group = 0x7f090016
 com.medianexpo.player:array/exo_controls_playback_speeds = 0x7f010000
@@ -627,12 +983,33 @@ com.medianexpo.player:id/accessibility_custom_action_0 = 0x7f070001
 com.medianexpo.player:id/exo_sub_text = 0x7f07005f
 com.medianexpo.player:attr/fastScrollHorizontalTrackDrawable = 0x7f02000e
 com.medianexpo.player:id/accessibility_custom_action_2 = 0x7f07000d
+=======
+com.medianexpo.player:color/notification_material_background_media_default_color = 0x7f030010
+com.medianexpo.player:layout/notification_template_icon_group = 0x7f090016
+com.medianexpo.player:array/exo_controls_playback_speeds = 0x7f010000
+com.medianexpo.player:id/exo_ffwd_with_amount = 0x7f070049
+com.medianexpo.player:id/action_divider = 0x7f070023
+com.medianexpo.player:string/tab = 0x7f0c007f
+com.medianexpo.player:id/compose_view_saveable_id_tag = 0x7f070033
+com.medianexpo.player:id/accessibility_custom_action_8 = 0x7f07001f
+com.medianexpo.player:dimen/exo_settings_sub_text_size = 0x7f040018
+com.medianexpo.player:string/date_range_input_invalid_range_input = 0x7f0c0027
+com.medianexpo.player:id/dialog_button = 0x7f070035
+com.medianexpo.player:attr/hide_during_ads = 0x7f02001c
+com.medianexpo.player:string/media3_controls_pause_description = 0x7f0c006d
+com.medianexpo.player:id/accessibility_custom_action_0 = 0x7f070001
+com.medianexpo.player:id/exo_sub_text = 0x7f070062
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:dimen/exo_settings_text_height = 0x7f040019
 com.medianexpo.player:attr/fontWeight = 0x7f02001b
 com.medianexpo.player:attr/resize_mode = 0x7f020028
 com.medianexpo.player:attr/queryPatterns = 0x7f020025
 com.medianexpo.player:attr/ad_marker_color = 0x7f020000
+<<<<<<< HEAD
 com.medianexpo.player:id/fill = 0x7f070066
+=======
+com.medianexpo.player:id/fill = 0x7f070069
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:dimen/exo_styled_bottom_bar_height = 0x7f04001f
 com.medianexpo.player:id/accessibility_custom_action_10 = 0x7f070003
 com.medianexpo.player:dimen/exo_styled_progress_enabled_thumb_size = 0x7f040026
@@ -646,12 +1023,19 @@ com.medianexpo.player:attr/font = 0x7f020011
 com.medianexpo.player:attr/fontProviderPackage = 0x7f020016
 com.medianexpo.player:attr/show_next_button = 0x7f020032
 com.medianexpo.player:drawable/exo_legacy_controls_rewind = 0x7f05002c
+<<<<<<< HEAD
 com.medianexpo.player:id/exo_repeat_toggle = 0x7f070058
 com.medianexpo.player:id/accessibility_custom_action_26 = 0x7f070014
 com.medianexpo.player:dimen/notification_big_circle_margin = 0x7f040032
 com.medianexpo.player:attr/backgroundTint = 0x7f020006
 com.medianexpo.player:drawable/exo_icon_fastforward = 0x7f050013
 com.medianexpo.player:drawable/exo_ic_subtitle_off = 0x7f050010
+=======
+com.medianexpo.player:id/exo_repeat_toggle = 0x7f07005b
+com.medianexpo.player:id/accessibility_custom_action_26 = 0x7f070014
+com.medianexpo.player:dimen/notification_big_circle_margin = 0x7f040032
+com.medianexpo.player:attr/backgroundTint = 0x7f020006
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
 com.medianexpo.player:attr/repeat_toggle_modes = 0x7f020027
 com.medianexpo.player:styleable/PlayerControlView = 0x7f0e0009
 com.medianexpo.player:layout/notification_template_custom_big = 0x7f090015

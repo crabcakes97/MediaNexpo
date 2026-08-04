@@ -1,5 +1,24 @@
 R_DEF: Internal format may change without notice
 local
+<<<<<<< HEAD
 color purple_background
 drawable ic_music_note
 mipmap ic_launcher
+=======
+color ic_launcher_background
+color mn_accent
+drawable ic_launcher
+drawable ic_launcher_background
+drawable ic_launcher_foreground
+drawable ic_music_note
+id btn_widget_next
+id btn_widget_play
+id btn_widget_prev
+id txt_widget_artist
+id txt_widget_title
+id widget_container
+layout widget_media
+mipmap ic_launcher
+mipmap ic_launcher_round
+xml media_widget_info
+>>>>>>> 2c4ab1d (Initial commit after project recovery)

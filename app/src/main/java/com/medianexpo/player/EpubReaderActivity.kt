@@ -173,8 +173,23 @@ private fun extractEpubHtml(
     context: android.content.Context,
     uri: Uri
 ): Pair<String?, String?> {
+<<<<<<< HEAD
     val input = context.contentResolver.openInputStream(uri)
         ?: return null to "Cannot open file"
+=======
+    val input = try {
+        context.contentResolver.openInputStream(uri)
+            ?: if (uri.scheme == "file") {
+                val path = uri.path
+                if (path != null) java.io.FileInputStream(java.io.File(path)) else null
+            } else null
+    } catch (e: Exception) {
+        try {
+            if (uri.scheme == "file" && uri.path != null) java.io.FileInputStream(java.io.File(uri.path!!))
+            else null
+        } catch (_: Exception) { null }
+    } ?: return null to "Cannot open file"
+>>>>>>> 2c4ab1d (Initial commit after project recovery)
     return try {
         val zip = ZipInputStream(input)
         val entries = mutableMapOf<String, ByteArray>()
